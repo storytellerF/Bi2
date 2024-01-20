@@ -1,0 +1,286 @@
+syntax = "proto3";
+
+package bilibili.app.dynamic.v2;
+
+import "google/protobuf/any.proto";
+import "bilibili/app/archive/middleware/v1/preload.proto";
+import "bilibili/app/dynamic/v2/common.proto";
+import "bilibili/app/dynamic/v2/module.proto";
+import "bilibili/app/dynamic/v2/video.proto";
+import "bilibili/app/dynamic/v2/other.proto";
+
+// v2动态
+service Dynamic {
+  // 动态视频页
+  rpc DynVideo(DynVideoReq) returns (DynVideoReply);
+  // 动态综合页
+  rpc DynAll(DynAllReq) returns (DynAllReply);
+  // 批量动态id获取动态详情
+  rpc DynDetails(DynDetailsReq) returns (DynDetailsReply);
+  // 视频页最近访问 - 个人feed流
+  rpc DynVideoPersonal(DynVideoPersonalReq) returns (DynVideoPersonalReply);
+  // 视频页最近访问 - 标记已读
+  rpc DynVideoUpdOffset(DynVideoUpdOffsetReq) returns (NoReply);
+  // 动态通用附加卡-follow/取消follow
+  rpc DynAdditionCommonFollow(DynAdditionCommonFollowReq) returns(DynAdditionCommonFollowReply);
+  // 动态点赞
+  rpc DynThumb(DynThumbReq) returns(NoReply);
+  // 动态发布生成临时卡
+  rpc DynFakeCard(DynFakeCardReq) returns(DynFakeCardReply);
+  // 关注推荐up主换一换
+  rpc DynRcmdUpExchange(DynRcmdUpExchangeReq) returns(DynRcmdUpExchangeReply);
+  // 综合页最近访问 - 个人feed流
+  rpc DynAllPersonal(DynAllPersonalReq) returns (DynAllPersonalReply);
+  // 综合页最近访问 - 标记已读
+  rpc DynAllUpdOffset(DynAllUpdOffsetReq) returns (NoReply);
+  // 投票操作接口
+  rpc DynVote(DynVoteReq) returns (DynVoteReply);
+  // 网关调用 - 查看更多-列表
+  rpc DynMixUpListViewMore(DynMixUpListViewMoreReq) returns (DynMixUpListViewMoreReply);
+  // 轻浏览
+  rpc DynLight(DynLightReq) returns (DynLightReply);
+  // 动态详情页
+  rpc DynDetail(DynDetailReq) returns (DynDetailReply);
+  // 点赞列表
+  rpc LikeList(LikeListReq) returns (LikeListReply);
+  // 转发列表
+  rpc RepostList(RepostListReq) returns (RepostListRsp);
+  // 空间页动态
+  rpc DynSpace(DynSpaceReq) returns (DynSpaceRsp);
+  // 未登录页分区UP主推荐
+  rpc DynUnLoginRcmd(DynRcmdReq) returns (DynRcmdReply);
+}
+
+// 动态视频页-请求
+message DynVideoReq {
+  // 透传 update_baseline
+  string update_baseline = 1;
+  // 透传 history_offset
+  string offset = 2;
+  // 向下翻页数
+  int32 page = 3;
+  // 刷新方式
+  // 1:向上刷新 2:向下翻页
+  Refresh refresh_type = 4;
+  // 秒开参数 新版本废弃，统一使用player_args
+  PlayurlParam playurl_param = 5;
+  // 综合页当前更新的最大值
+  string assist_baseline = 6;
+  // 客户端时区 兼容UTC-14和Etc/GMT+12,时区区间[-12,14] 东八区为8
+  int32 local_time = 7;
+  // 来源
+  string from = 8;
+  // 秒开参数
+  bilibili.app.archive.middleware.v1.PlayerArgs player_args = 9;
+}
+
+
+// 动态视频页-响应
+message DynVideoReply {
+  // 卡片列表
+  CardVideoDynList dynamic_list = 1;
+  // 动态卡片
+  CardVideoUpList video_up_list = 2;
+  // 视频页-我的追番
+  CardVideoFollowList video_follow_list = 3;
+}
+
+// 动态卡片列表
+message CardVideoDynList {
+  // 动态列表
+  repeated DynamicItem list = 1;
+  // 更新的动态数
+  int64 update_num = 2;
+  // 历史偏移
+  string history_offset = 3;
+  // 更新基础信息
+  string update_baseline = 4;
+  // 是否还有更多数据
+  bool has_more = 5;
+}
+
+// 动态列表渲染部分-详情模块-转发模块
+message MdlDynForward {
+  // 动态转发核心模块 套娃
+  DynamicItem item = 1;
+  // 透传类型
+  // 0:分享 1:转发
+  int32 rtype = 2;
+}
+
+
+// 批量动态id获取动态详情-响应
+message DynDetailsReply {
+  // 动态列表
+  repeated DynamicItem list = 1;
+}
+
+// 最近访问-个人feed流列表-响应
+message DynVideoPersonalReply {
+  // 动态列表
+  repeated DynamicItem list = 1;
+  // 偏移量
+  string offset = 2;
+  // 是否还有更多数据
+  bool has_more = 3;
+  // 已读进度
+  string read_offset = 4;
+  // 关注状态
+  Relation relation = 5;
+  // 顶部预约卡
+  TopAdditionUP addition_up = 6;
+}
+
+// 动态发布生成临时卡-响应
+message DynFakeCardReply {
+  // 动态卡片
+  DynamicItem item = 1;
+}
+
+// 最近访问-个人feed流列表-返回
+message DynAllPersonalReply {
+  // 动态列表
+  repeated DynamicItem list = 1;
+  // 偏移量
+  string offset = 2;
+  // 是否还有更多数据
+  bool has_more = 3;
+  // 已读进度
+  string read_offset = 4;
+  // 关注状态
+  Relation relation = 5;
+  // 顶部预约卡
+  TopAdditionUP addition_up = 6;
+}
+
+// 动态详情页-响应
+message DynDetailReply {
+  // 动态详情
+  DynamicItem item = 1;
+}
+
+// 转发列表-响应
+message RepostListRsp {
+  // 列表
+  repeated DynamicItem list = 1;
+  // 偏移
+  string offset = 2;
+  // 是否还有更多
+  bool has_more = 3;
+  // 转发总数
+  int64 total_count = 4;
+  // 评论类型
+  RepostType repost_type = 5;
+}
+
+// 空间页动态-响应
+message DynSpaceRsp {
+  // 卡片列表
+  repeated DynamicItem list = 1;
+  // 历史偏移
+  string history_offset = 2;
+  // 是否还有更多数据
+  bool has_more = 3;
+}
+
+// 动态综合页-请求
+message DynAllReq {
+  // 透传 update_baseline
+  string update_baseline = 1;
+  // 透传 history_offset
+  string offset = 2;
+  // 向下翻页数
+  int32 page = 3;
+  // 刷新方式 1向上刷新 2向下翻页
+  Refresh refresh_type = 4;
+  // 秒开参数 新版本废弃，统一使用player_args
+  PlayurlParam playurl_param = 5;
+  // 综合页当前更新的最大值
+  string assist_baseline = 6;
+  // 客户端时区 兼容UTC-14和Etc/GMT+12,时区区间[-12,14] 东八区为8
+  int32 local_time = 7;
+  // 推荐up主入参(new的时候传)
+  RcmdUPsParam rcmd_ups_param = 8;
+  // 广告参数
+  AdParam ad_param = 9;
+  // 是否冷启
+  int32 cold_start = 10;
+  // 来源
+  string from = 11;
+  // 秒开参数
+  bilibili.app.archive.middleware.v1.PlayerArgs player_args = 12;
+}
+
+// 推荐up主入参
+message RcmdUPsParam {
+  int64 dislike_ts = 1;
+}
+
+// 综合页请求广告所需字段，由客户端-网关透传
+message AdParam {
+  //综合页请求广告所需字段，由客户端-网关透传
+  string ad_extra = 1;
+  // request_id
+  string request_id = 2;
+}
+
+// 动态综合页-响应
+message DynAllReply {
+  // 卡片列表
+  DynamicList dynamic_list = 1;
+  // 顶部up list
+  CardVideoUpList up_list = 2;
+  // 话题广场
+  TopicList topic_list = 3;
+  // 无关注推荐
+  Unfollow unfollow = 4;
+  // 分区UP推荐
+  DynRegionRcmd region_rcmd = 5;
+}
+
+// 轻浏览-请求
+message DynLightReq {
+  // 透传 history_offset
+  string history_offset = 1;
+  // 向下翻页数
+  int32 page = 2;
+  // 来源
+  string from = 3;
+  // 秒开参数
+  bilibili.app.archive.middleware.v1.PlayerArgs player_args = 4;
+  // 客户端时区 兼容UTC-14和Etc/GMT+12,时区区间[-12,14] 东八区为8
+  int32 local_time = 5;
+}
+
+// 轻浏览-响应
+message DynLightReply {
+  // 卡片列表
+  DynamicList dynamic_list = 1;
+}
+
+// 动态详情页-请求
+message DynDetailReq {
+  // up主uid
+  int64 uid = 1;
+  // 动态ID
+  string dynamic_id = 2;
+  // 动态类型
+  int64 dyn_type = 3;
+  // 业务方资源id
+  int64 rid = 4;
+  // 广告参数
+  AdParam ad_param = 5;
+  // From来源
+  string from = 6;
+  // 秒开参数
+  bilibili.app.archive.middleware.v1.PlayerArgs player_args = 7;
+  // 分享id
+  string share_id = 8;
+  // 分享类型
+  // 1:文字 2:图片 3:链接 4:视频 5:音频
+  int32 share_mode = 9;
+  // 客户端时区 兼容UTC-14和Etc/GMT+12,时区区间[-12,14] 东八区为8
+  int32 local_time = 10;
+  // pattern
+  string pattern = 11;
+}
