@@ -1,3 +1,9 @@
-import androidx.compose.ui.window.ComposeUIViewController
+@file:Suppress("unused", "FunctionName")
 
-fun MainViewController() = ComposeUIViewController { App() }
+import androidx.compose.ui.window.ComposeUIViewController
+import com.storyteller_f.bi.App
+import platform.UIKit.UIViewController
+
+fun MainViewController(): UIViewController {
+    return ComposeUIViewController { App() }
+}
