@@ -26,7 +26,6 @@ fun <T : ViewModel> build(modelClass: KClass<T>, extras: CreationExtras): T? {
         CommentReplyViewModel::class -> CommentReplyViewModel(
             extras[VideoIdLong]!!,
             extras[CommentId]!!,
-            
         )
 
         VideoSearchViewModel::class -> VideoSearchViewModel()

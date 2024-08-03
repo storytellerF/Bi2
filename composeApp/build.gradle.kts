@@ -54,7 +54,6 @@ kotlin {
             implementation(libs.androidx.media3.exoplayer)
             implementation(libs.androidx.media3.exoplayer.dash)
             implementation(libs.androidx.media3.ui)
-            implementation(libs.logback.android)
         }
         commonMain.dependencies {
             //compose
@@ -104,7 +103,6 @@ kotlin {
             implementation(libs.qrcode.kotlin.jvm)
             implementation(libs.appdirs)
             implementation(libs.vlcj)
-            implementation(libs.logback.classic)
         }
     }
     jvmToolchain(11)

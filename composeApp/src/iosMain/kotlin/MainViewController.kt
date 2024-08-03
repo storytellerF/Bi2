@@ -9,7 +9,3 @@ import platform.UIKit.UIViewController
 fun MainViewController(): UIViewController {
     return ComposeUIViewController { App() }
 }
-
-fun debugBuild() {
-    Napier.base(DebugAntilog())
-}

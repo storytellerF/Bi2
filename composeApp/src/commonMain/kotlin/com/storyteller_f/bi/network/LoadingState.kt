@@ -1,15 +1,12 @@
 package com.storyteller_f.bi.network
 
-import app.cash.paging.PagingSourceLoadResultError
 import com.storyteller_f.bi.entity.Response
-import com.storyteller_f.bi.entity.ResultInfo
 import com.storyteller_f.bi.entity.ResultInfo2
 import kotlinx.coroutines.flow.MutableStateFlow
 
 sealed class LoadingState {
     class Loading(val state: String) : LoadingState()
     class Error(val e: Throwable) : LoadingState()
-
     class Done(val itemCount: Int = 1) : LoadingState()
 }
 

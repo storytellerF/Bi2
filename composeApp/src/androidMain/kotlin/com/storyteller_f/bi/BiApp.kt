@@ -16,7 +16,6 @@ class BiApp : Application() {
 
         LoginInfoState.restore()
         UserInfoState.restoreUserInfo()
-        Napier.base(DebugAntilog())
     }
 
     private fun getSystemUserAgent(): String {

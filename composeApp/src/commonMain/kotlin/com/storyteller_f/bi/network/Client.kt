@@ -4,6 +4,8 @@ import com.storyteller_f.bi.gs.LoginInfoState
 import com.storyteller_f.bi.gs.getOrCreateBuvidId
 import com.storyteller_f.bi.userAgent
 import de.jensklingenberg.ktorfit.Ktorfit
+import io.github.aakira.napier.DebugAntilog
+import io.github.aakira.napier.Napier
 import io.ktor.client.*
 import io.ktor.client.plugins.*
 import io.ktor.client.plugins.api.*
@@ -100,9 +102,16 @@ val ktorClient by lazy {
             json()
         }
         install(Logging) {
+            logger = object : Logger {
+                override fun log(message: String) {
+                    Napier.v("HTTP Client", null, message)
+                }
+            }
             level = LogLevel.ALL
         }
         install(BiPlugin)
+    }.also {
+        Napier.base(DebugAntilog())
     }
 }
 
