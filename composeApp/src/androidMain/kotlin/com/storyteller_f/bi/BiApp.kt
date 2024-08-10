@@ -4,8 +4,6 @@ import android.app.Application
 import android.webkit.WebSettings
 import com.storyteller_f.bi.gs.LoginInfoState
 import com.storyteller_f.bi.gs.UserInfoState
-import io.github.aakira.napier.DebugAntilog
-import io.github.aakira.napier.Napier
 
 class BiApp : Application() {
 
