@@ -28,4 +28,4 @@ dependencyResolutionManagement {
 }
 
 include(":composeApp")
-//include("network")
+include("network")

@@ -1,4 +1,5 @@
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
+import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -9,22 +10,30 @@ plugins {
     alias(libs.plugins.ktorfit)
     kotlin("plugin.serialization") version "2.0.0"
     alias(libs.plugins.wire)
+    id("com.starter.easylauncher") version "6.4.0"
 }
 
+val buildIosTarget = project.findProperty("target.ios") == true
+val buildWasmTarget = project.findProperty("target.wasm") == true
+
 kotlin {
-//    @OptIn(ExperimentalWasmDsl::class)
-//    wasmJs {
-//        moduleName = "composeApp"
-//        browser {
-//            commonWebpackConfig {
-//                outputFileName = "composeApp.js"
-//            }
-//        }
-//        binaries.executable()
-//    }
+    if (buildWasmTarget) {
+        @OptIn(ExperimentalWasmDsl::class)
+        wasmJs {
+            moduleName = "composeApp"
+            browser {
+                commonWebpackConfig {
+                    outputFileName = "composeApp.js"
+                }
+            }
+            binaries.executable()
+        }
+    }
+
 
     androidTarget {
         compilations.all {
+            @Suppress("DEPRECATION")
             kotlinOptions {
                 jvmTarget = "11"
             }
@@ -33,17 +42,20 @@ kotlin {
 
     jvm("desktop")
 
-    listOf(
-        iosX64(),
-        iosArm64(),
-        iosSimulatorArm64()
-    ).forEach { iosTarget ->
-        iosTarget.binaries.framework {
-            baseName = "ComposeApp"
-            isStatic = true
-            binaryOption("bundleId", "com.storyteller-f.bi.shared")
+    if (buildIosTarget) {
+        listOf(
+            iosX64(),
+            iosArm64(),
+            iosSimulatorArm64()
+        ).forEach { iosTarget ->
+            iosTarget.binaries.framework {
+                baseName = "ComposeApp"
+                isStatic = true
+                binaryOption("bundleId", "com.storyteller-f.bi.shared")
+            }
         }
     }
+
 
     sourceSets {
         val desktopMain by getting
@@ -135,6 +147,9 @@ android {
         }
     }
     buildTypes {
+        getByName("debug") {
+            applicationIdSuffix = ".debug"
+        }
         getByName("release") {
             isMinifyEnabled = false
         }
@@ -157,18 +172,17 @@ compose.desktop {
     }
 }
 
-//compose.experimental {
-//    web.application {}
-//}
-
 dependencies {
     with("de.jensklingenberg.ktorfit:ktorfit-ksp:${libs.versions.ktorfitVersion.get()}") {
 //        add("kspCommonMainMetadata", this)
         add("kspDesktop", this)
         add("kspAndroid", this)
-        add("kspIosX64", this)
-        add("kspIosArm64", this)
-        add("kspIosSimulatorArm64", this)
+        if (buildIosTarget) {
+            add("kspIosX64", this)
+            add("kspIosArm64", this)
+            add("kspIosSimulatorArm64", this)
+        }
+
     }
 }
 

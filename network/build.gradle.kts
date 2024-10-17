@@ -1,5 +1,8 @@
 @file:Suppress("UnstableApiUsage")
 
+import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
+
+
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidLibrary)
@@ -10,20 +13,27 @@ plugins {
     id("kotlin-parcelize")
 }
 
+val buildIosTarget = project.findProperty("target.ios") == true
+val buildWasmTarget = project.findProperty("target.wasm") == true
+
 kotlin {
-//    @OptIn(ExperimentalWasmDsl::class)
-//    wasmJs {
-//        moduleName = "composeApp"
-//        browser {
-//            commonWebpackConfig {
-//                outputFileName = "composeApp.js"
-//            }
-//        }
-//        binaries.executable()
-//    }
+    if (buildWasmTarget) {
+        @OptIn(ExperimentalWasmDsl::class)
+        wasmJs {
+            moduleName = "composeApp"
+            browser {
+                commonWebpackConfig {
+                    outputFileName = "composeApp.js"
+                }
+            }
+            binaries.executable()
+        }
+    }
+
 
     androidTarget {
         compilations.all {
+            @Suppress("DEPRECATION")
             kotlinOptions {
                 jvmTarget = "11"
             }
@@ -32,22 +42,20 @@ kotlin {
 
     jvm()
 
-    iosX64()
-    iosArm64()
-    iosSimulatorArm64()
+    if (buildIosTarget) {
+        iosX64()
+        iosArm64()
+        iosSimulatorArm64()
+    }
+
 
 
     sourceSets {
-        //val desktopMain by getting
-
         androidMain.dependencies {
         }
         commonMain.dependencies {
-
-            implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1-Beta")
+            implementation(libs.kotlinx.coroutines.core)
         }
-        //desktopMain.dependencies {
-        //}
     }
     jvmToolchain(11)
 }
@@ -75,12 +83,13 @@ android {
 
 dependencies {
     with("de.jensklingenberg.ktorfit:ktorfit-ksp:${libs.versions.ktorfitVersion.get()}") {
-//        add("kspCommonMainMetadata", this)
-//        add("kspDesktop", this)
         add("kspAndroid", this)
-        add("kspIosX64", this)
-        add("kspIosArm64", this)
-        add("kspIosSimulatorArm64", this)
+        if (buildIosTarget) {
+            add("kspIosX64", this)
+            add("kspIosArm64", this)
+            add("kspIosSimulatorArm64", this)
+        }
+
     }
 }
 

@@ -1,8 +1,6 @@
 package com.storyteller_f.bi.network
 
 import com.squareup.wire.*
-import com.squareup.wire.internal.GrpcMessageSink
-import com.squareup.wire.internal.GrpcMessageSource
 import com.storyteller_f.bi.gs.LoginInfoState
 import com.storyteller_f.bi.gs.getOrCreateBuvidId
 import com.storyteller_f.bi.userAgent
@@ -19,7 +17,6 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.SendChannel
-import okio.Buffer
 import okio.Timeout
 
 expect val grpcClient: GrpcClient
@@ -113,28 +110,29 @@ fun <R : Any, S : Any> GrpcMethod<S, R>.grpcStreamingCall(): GrpcStreamingCall<S
         }
 
         override fun executeBlocking(): Pair<MessageSink<S>, MessageSource<R>> {
-            val sink = Buffer()
-            val grpcMessageSink = GrpcMessageSink(sink, 0, method.requestAdapter, null, "")
-            val bufferedSource = Buffer()
-            val grpcMessageSource = GrpcMessageSource(bufferedSource, method.responseAdapter, null)
-            runBlocking {
-                val (sendChannel, receiveChannel) = executeIn(this)
-                launch {
-                    for (r in receiveChannel) {
-                        bufferedSource.write(method.responseAdapter.encode(r))
-                    }
-                }
-                launch {
-                    val array = ByteArray(10240)
-                    while (true) {
-                        val offset = sink.read(array)
-                        if (offset != -1) {
-                            sendChannel.send(method.requestAdapter.decode(array.copyOfRange(0, offset)))
-                        }
-                    }
-                }
-            }
-            return grpcMessageSink to grpcMessageSource
+            TODO("")
+//            val sink = Buffer()
+//            val grpcMessageSink = GrpcMessageSink(sink, 0, method.requestAdapter, null, "")
+//            val bufferedSource = Buffer()
+//            val grpcMessageSource = GrpcMessageSource(bufferedSource, method.responseAdapter, null)
+//            runBlocking {
+//                val (sendChannel, receiveChannel) = executeIn(this)
+//                launch {
+//                    for (r in receiveChannel) {
+//                        bufferedSource.write(method.responseAdapter.encode(r))
+//                    }
+//                }
+//                launch {
+//                    val array = ByteArray(10240)
+//                    while (true) {
+//                        val offset = sink.read(array)
+//                        if (offset != -1) {
+//                            sendChannel.send(method.requestAdapter.decode(array.copyOfRange(0, offset)))
+//                        }
+//                    }
+//                }
+//            }
+//            return grpcMessageSink to grpcMessageSource
         }
 
         override fun executeIn(scope: CoroutineScope): Pair<SendChannel<S>, ReceiveChannel<R>> {
