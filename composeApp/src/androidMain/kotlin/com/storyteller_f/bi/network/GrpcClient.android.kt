@@ -4,8 +4,8 @@ import com.squareup.wire.GrpcClient
 import okhttp3.OkHttpClient
 
 actual val grpcClient: GrpcClient
-    get() = GrpcClient.Builder().client(OkHttpClient.Builder().addInterceptor {
-        it.proceed(it.request().newBuilder().apply {
+    get() = GrpcClient.Builder().client(OkHttpClient.Builder().addInterceptor { chain ->
+        chain.proceed(chain.request().newBuilder().apply {
             grpcHeaderMap.forEach {
                 addHeader(it.key, it.value)
             }

@@ -26,7 +26,7 @@ object LoginInfoState {
                 val fromFile = fileSystem.read(path) {
                     readByteArray()
                 }
-                val jsonStr = String(fromFile)
+                val jsonStr = fromFile.decodeToString()
                 val loginInfo = Json.decodeFromString<LoginInfo>(jsonStr)
                 _loginInfo = loginInfo
             }

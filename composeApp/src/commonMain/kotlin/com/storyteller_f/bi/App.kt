@@ -4,13 +4,22 @@ import androidx.compose.runtime.Composable
 import com.storyteller_f.bi.components.HomePage
 import com.storyteller_f.bi.components.LoginPage
 import com.storyteller_f.bi.ui.theme.BiTheme
+import io.github.aakira.napier.DebugAntilog
+import io.github.aakira.napier.Napier
 import moe.tlaster.precompose.PreComposeApp
 import moe.tlaster.precompose.navigation.NavHost
 import moe.tlaster.precompose.navigation.rememberNavigator
 import moe.tlaster.precompose.navigation.transition.NavTransition
 
+object StaticObject {
+    init {
+        Napier.base(DebugAntilog())
+    }
+}
+
 @Composable
 fun App() {
+    StaticObject
     BiTheme {
         PreComposeApp {
             val navigator = rememberNavigator()

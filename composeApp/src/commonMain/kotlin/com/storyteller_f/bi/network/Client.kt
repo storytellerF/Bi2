@@ -1,5 +1,6 @@
 package com.storyteller_f.bi.network
 
+import com.storyteller_f.bi.apis.*
 import com.storyteller_f.bi.gs.LoginInfoState
 import com.storyteller_f.bi.gs.getOrCreateBuvidId
 import com.storyteller_f.bi.userAgent
@@ -40,6 +41,9 @@ val BiPlugin = createClientPlugin("CustomHeaderPlugin") {
                 }
             }
         }
+    }
+    onResponse {
+
     }
     transformRequestBody { request, content, _ ->
         if (request.method == HttpMethod.Post && content is FormDataContent) {
@@ -110,8 +114,6 @@ val ktorClient by lazy {
             level = LogLevel.ALL
         }
         install(BiPlugin)
-    }.also {
-        Napier.base(DebugAntilog())
     }
 }
 
@@ -185,33 +187,33 @@ val bangumiClient by lazy {
 }
 
 val authApi by lazy {
-    passportClient.create<com.storyteller_f.bi.apis.AuthApi>()
+    passportClient.createAuthApi()
 }
 
 val accountApi by lazy {
-    biliClient.create<com.storyteller_f.bi.apis.AccountApi>()
+    biliClient.createAccountApi()
 }
 
 val videoApi by lazy {
-    biliClient.create<com.storyteller_f.bi.apis.VideoAPI>()
+    biliClient.createVideoAPI()
 }
 
 val userspaceApi by lazy {
-    biliClient.create<com.storyteller_f.bi.apis.UserApi>()
+    biliClient.createUserApi()
 }
 
 val searchApi by lazy {
-    biliClient.create<com.storyteller_f.bi.apis.SearchApi>()
+    biliClient.createSearchApi()
 }
 
 val bangumiApi by lazy {
-    bangumiClient.create<com.storyteller_f.bi.apis.BangumiAPI>()
+    bangumiClient.createBangumiAPI()
 }
 
 val bangumiBiliApi by lazy {
-    biliClient.create<com.storyteller_f.bi.apis.BangumiBiliAPI>()
+    biliClient.createBangumiBiliAPI()
 }
 
 val playerApi by lazy {
-    biliClient.create<com.storyteller_f.bi.apis.PlayerAPI>()
+    biliClient.createPlayerAPI()
 }

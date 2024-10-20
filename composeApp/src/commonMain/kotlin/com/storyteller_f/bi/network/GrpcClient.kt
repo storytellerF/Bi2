@@ -17,6 +17,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.SendChannel
+import kotlinx.io.readByteArray
 import okio.Timeout
 
 expect val grpcClient: GrpcClient
@@ -144,8 +145,8 @@ fun <R : Any, S : Any> GrpcMethod<S, R>.grpcStreamingCall(): GrpcStreamingCall<S
                     val channel: ByteReadChannel = it.body()
                     while (!channel.isClosedForRead) {
                         val packet = channel.readRemaining(1024)
-                        while (!packet.isEmpty) {
-                            val bytes = packet.readBytes()
+                        while (!packet.exhausted()) {
+                            val bytes = packet.readByteArray()
                             responseChannel.send(method.responseAdapter.decode(bytes))
                         }
                     }
