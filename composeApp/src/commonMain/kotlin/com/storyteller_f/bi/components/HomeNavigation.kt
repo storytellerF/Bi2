@@ -5,38 +5,15 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-
-@Composable
-fun HomeBottomNavigationBar(
-    currentRoute: HomeNavigationConfig? = HomeNavigationConfig.Favorite,
-    selectRoute: (HomeNavigationConfig) -> Unit = {}
-) {
-    NavigationBar {
-        HomeNavigationConfig.bottomNavigationItems.forEach { screen ->
-            NavigationBarItem(selected = currentRoute?.route == screen.route, onClick = {
-                selectRoute(screen)
-            }, {
-                NavItemIcon(screen)
-            }, label = {
-                Text(text = screen.title)
-            })
-        }
-    }
-}
+import com.storyteller.bi2.resources.Res
+import org.jetbrains.compose.resources.DrawableResource
+import org.jetbrains.compose.resources.InternalResourceApi
+import org.jetbrains.compose.resources.painterResource
 
 @Composable
 fun NavItemIcon(screen: HomeNavigationConfig) {
-    when {
-        screen.icon != null -> {
-//            Icon(
-//                painter = painterResource(DrawableResource(screen.icon)),
-//                contentDescription = screen.route
-//            )
-        }
-
-        screen.vector != null -> Icon(
-            screen.vector,
-            contentDescription = screen.route
-        )
-    }
+    Icon(
+        screen.vector,
+        contentDescription = screen.route
+    )
 }

@@ -33,6 +33,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.launch
+import moe.tlaster.precompose.navigation.BackHandler
 import moe.tlaster.precompose.viewmodel.viewModelScope
 
 @Composable
@@ -40,12 +41,12 @@ fun SearchPage(
     modifier: Modifier = Modifier,
     userInfo: UserInfo? = null,
     dockMode: Boolean = false,
-    noMiddleState: Boolean = false,
     playVideo: (String?, String?, String, Long) -> Unit = { _, _, _, _ -> },
     login: () -> Unit = {},
     back: () -> Unit = {}
 ) {
     val viewModel = viewModel(VideoSearchViewModel::class)
+
     var activated by remember {
         mutableStateOf(false)
     }
@@ -63,11 +64,7 @@ fun SearchPage(
     }
     val leadingIcon = @Composable {
         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "back", modifier = Modifier.clickable {
-            when {
-                noMiddleState -> back()
-                activated -> activated = false
-                else -> back()
-            }
+            activated = false
         })
     }
     val onActiveChange: (Boolean) -> Unit = {
@@ -99,15 +96,6 @@ fun SearchPage(
         modifier,
         content
     )
-    LaunchedEffect(key1 = noMiddleState) {
-        if (noMiddleState) {
-            activated = true
-        }
-    }
-    //todo BackHandler
-//    BackHandler(enabled = noMiddleState) {
-//        back()
-//    }
 
 }
 
@@ -126,29 +114,48 @@ private fun CombinedSearchBar(
     modifier: Modifier,
     content: @Composable (ColumnScope.() -> Unit)
 ) {
+    val colors1 = SearchBarDefaults.colors()
     if (dockMode) {
         DockedSearchBar(
-            query = input,
-            onQueryChange = onQueryChange,
-            onSearch = onSearch,
-            active = activated,
-            onActiveChange = onActiveChange,
-            placeholder = placeholder,
-            leadingIcon = leadingIcon,
-            trailingIcon = trailingIcon,
-            modifier = modifier, content = content
+            inputField = {
+                SearchBarDefaults.InputField(
+                    query = input,
+                    onQueryChange = onQueryChange,
+                    onSearch = onSearch,
+                    expanded = activated,
+                    onExpandedChange = onActiveChange,
+                    placeholder = placeholder,
+                    leadingIcon = leadingIcon,
+                    trailingIcon = trailingIcon,
+                    colors = colors1.inputFieldColors,
+                )
+            },
+            expanded = activated,
+            onExpandedChange = onActiveChange,
+            modifier = modifier,
+            colors = colors1,
+            content = content,
         )
     } else {
         SearchBar(
-            query = input,
-            onQueryChange = onQueryChange,
-            onSearch = onSearch,
-            active = activated,
-            onActiveChange = onActiveChange,
-            placeholder = placeholder,
-            leadingIcon = leadingIcon,
-            trailingIcon = trailingIcon,
-            modifier = modifier, content = content
+            inputField = {
+                SearchBarDefaults.InputField(
+                    query = input,
+                    onQueryChange = onQueryChange,
+                    onSearch = onSearch,
+                    expanded = activated,
+                    onExpandedChange = onActiveChange,
+                    placeholder = placeholder,
+                    leadingIcon = leadingIcon,
+                    trailingIcon = trailingIcon,
+                    colors = colors1.inputFieldColors,
+                )
+            },
+            expanded = activated,
+            onExpandedChange = onActiveChange,
+            modifier = modifier,
+            colors = colors1,
+            content = content,
         )
     }
 }
@@ -345,7 +352,7 @@ class SearchSource(private val keyword: String) : PagingSource<Int, SearchVideoI
     override suspend fun load(params: LoadParams<Int>): LoadResult<Int, SearchVideoInfo> {
         val key = params.key
         return if (keyword == "") {
-            LoadResult.Error(Exception("不能为空"))
+            LoadResult.Error(Exception("输入内容开始搜索"))
         } else {
             val pageNum = key ?: 1
             searchVideo(keyword, pageNum, params.loadSize).fold(onSuccess = {

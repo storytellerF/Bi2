@@ -1,31 +1,28 @@
 package com.storyteller_f.bi.components
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Explore
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.ui.graphics.vector.ImageVector
 
 sealed class HomeNavigationConfig(
     val route: String,
     val title: String,
-    val vector: ImageVector? = null,
-    val icon: String? = null
+    val vector: ImageVector,
 ) {
 
-    data object History : HomeNavigationConfig("histories", "History", icon = "src/commonMain/commonResources/drawable/baseline_history_24.xml")
+    data object History : HomeNavigationConfig("/histories", "History", vector = Icons.Filled.History)
 
 
-    data object Moments : HomeNavigationConfig("moments", "Moments", icon = "src/commonMain/commonResources/drawable/baseline_explore_24.xml")
+    data object Moments : HomeNavigationConfig("/moments", "Moments", vector = Icons.Filled.Explore)
 
 
-    data object Playlist : HomeNavigationConfig("playlist", "Playlist", vector = Icons.Filled.PlayArrow)
+    data object Playlist : HomeNavigationConfig("/playlist", "Playlist", vector = Icons.Filled.PlayArrow)
 
 
-    data object Favorite : HomeNavigationConfig("favorites", "Favorites", vector = Icons.Filled.Favorite)
-
-
-    data class FavoriteDetail(val id: String) :
-        HomeNavigationConfig("favorite-detail/$id", "Favorite", vector = Icons.Filled.Favorite)
+    data object Favorite : HomeNavigationConfig("/favorites", "Favorites", vector = Icons.Filled.Favorite)
 
     companion object {
 
@@ -37,13 +34,4 @@ sealed class HomeNavigationConfig(
                 Favorite,
             )
     }
-}
-
-
-sealed class HomePageChild {
-    data object History : HomePageChild()
-    data object Moments : HomePageChild()
-    data object Favorite : HomePageChild()
-    data class FavoriteDetail(val id: String) : HomePageChild()
-    data object Playlist : HomePageChild()
 }
