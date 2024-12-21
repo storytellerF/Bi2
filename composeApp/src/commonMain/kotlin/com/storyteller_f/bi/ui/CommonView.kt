@@ -2,20 +2,14 @@ package com.storyteller_f.bi.ui
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.pullrefresh.PullRefreshIndicator
 import androidx.compose.material.pullrefresh.pullRefresh
 import androidx.compose.material.pullrefresh.rememberPullRefreshState
-import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -27,47 +21,65 @@ import app.cash.paging.compose.LazyPagingItems
 import app.cash.paging.compose.itemContentType
 import app.cash.paging.compose.itemKey
 import com.seiko.imageloader.rememberImagePainter
+import com.storyteller_f.bi.LOCALAppNav
 import com.storyteller_f.bi.gs.UserInfoState
 import com.storyteller_f.bi.network.LoadingHandler
 import com.storyteller_f.bi.network.LoadingState
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-
 @Composable
-fun OneCenter(content: @Composable () -> Unit) {
+fun Center(content: @Composable () -> Unit) {
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         content()
     }
 }
 
 @Composable
-fun StateView(state: LoadingState?, content: @Composable () -> Unit) {
+fun StateView(state: LoadingState?, refresh: () -> Unit, content: @Composable () -> Unit) {
     when (state) {
-        null -> OneCenter {
-            Text(text = "waiting")
+        null -> Center {
+            Text(text = "Waiting")
         }
 
-        is LoadingState.Loading -> OneCenter {
-            Text(text = "loading")
+        is LoadingState.Loading -> Center {
+            Text(text = "Loading")
         }
 
-        is LoadingState.Error -> OneCenter {
+        is LoadingState.Error -> Center {
             val text = when (state.e) {
                 is Exception -> state.e.message
                 is Error -> state.e.message
                 else -> state.e.message
             }
-            Text(text = text.toString())
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(text = text.toString())
+                Button({
+                    refresh()
+                }) {
+                    Text("Retry")
+                }
+            }
         }
 
-        is LoadingState.Done -> if (state.itemCount == 0) OneCenter {
-            Text(text = "empty")
-        } else content()
+        is LoadingState.Done -> if (state.itemCount == 0) {
+            Center {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(text = "Empty")
+                    Button({
+                        refresh()
+                    }) {
+                        Text("Refresh")
+                    }
+                }
+            }
+        } else {
+            content()
+        }
     }
 }
 
-const val refreshAtLeastDelay = 300L
+const val REFRESH_AT_LEAST_DELAY = 300L
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
@@ -82,24 +94,29 @@ fun StateView(handler: LoadingHandler<*>, content: @Composable () -> Unit) {
         }
     })
     LaunchedEffect(key1 = refreshing, key2 = state) {
-        delay(refreshAtLeastDelay)
+        delay(REFRESH_AT_LEAST_DELAY)
         if (refreshing && state !is LoadingState.Loading) refreshing = false
     }
     Box(modifier = Modifier.pullRefresh(refreshState)) {
-        StateView(state, content)
+        StateView(state, {
+            refreshScope.launch {
+                handler.refresh()
+            }
+        }, content)
         PullRefreshIndicator(refreshing, refreshState, Modifier.align(Alignment.TopCenter))
     }
 }
 
 @Composable
-fun UserAware(login: () -> Unit = {}, content: @Composable () -> Unit) {
+fun UserHost(content: @Composable () -> Unit) {
     val u by UserInfoState.state.collectAsState()
     if (u == null) {
-        OneCenter {
+        Center {
+            val appNav = LOCALAppNav.current
             Button(onClick = {
-                login()
+                appNav.gotoLogin()
             }) {
-                Text(text = "login")
+                Text(text = "Login")
             }
         }
     } else {
@@ -128,7 +145,6 @@ fun <T : Any> LazyListScope.bottomAppending(lazyPagingItems: LazyPagingItems<T>)
     }
 }
 
-
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun <T : Any> StateView(pagingItems: LazyPagingItems<T>, function: @Composable () -> Unit) {
@@ -142,21 +158,20 @@ fun <T : Any> StateView(pagingItems: LazyPagingItems<T>, function: @Composable (
     })
     val refresh = pagingItems.loadState.refresh
     LaunchedEffect(key1 = refreshing, key2 = refresh) {
-        //增加延时，确保真正进入刷新状态
-        delay(refreshAtLeastDelay)
+        // 增加延时，确保真正进入刷新状态
+        delay(REFRESH_AT_LEAST_DELAY)
         if (refreshing && refresh !is LoadStateLoading) refreshing = false
     }
     Box(modifier = Modifier.pullRefresh(refreshState)) {
-        StateView(refresh, pagingItems.itemCount) {
-            function()
-        }
+        StateView(refresh, pagingItems.itemCount, {
+            pagingItems.refresh()
+        }, function)
         PullRefreshIndicator(refreshing, refreshState, Modifier.align(Alignment.TopCenter))
     }
 }
 
-
 @Composable
-fun StateView(state: app.cash.paging.LoadState?, count: Int = 1, content: @Composable () -> Unit) {
+fun StateView(state: app.cash.paging.LoadState?, count: Int = 1, refresh: () -> Unit, content: @Composable () -> Unit) {
     val loadingState = when (state) {
         null -> null
 
@@ -166,9 +181,8 @@ fun StateView(state: app.cash.paging.LoadState?, count: Int = 1, content: @Compo
 
         is LoadStateNotLoading -> LoadingState.Done(count)
     }
-    StateView(state = loadingState, content)
+    StateView(loadingState, refresh, content)
 }
-
 
 @Composable
 fun StandBy(modifier: Modifier, me: @Composable () -> Unit) {
@@ -178,7 +192,6 @@ fun StandBy(modifier: Modifier, me: @Composable () -> Unit) {
         me()
     }
 }
-
 
 @Composable
 fun <T : Any> BasicPagingList(

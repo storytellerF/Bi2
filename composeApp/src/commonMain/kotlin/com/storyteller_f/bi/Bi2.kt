@@ -9,4 +9,4 @@ expect val fileSystem: FileSystem
 /**
  * 返回用户私有目录的文件
  */
-expect fun realPath(id: String): String
+expect fun userPath(id: String): String

@@ -4,9 +4,10 @@ import com.storyteller_f.bi.network.DashSource
 import com.storyteller_f.bi.network.Service.videoPlayerResultInfo
 import com.storyteller_f.bi.network.Service.videoPlayurlData
 import com.storyteller_f.bi.network.Service.videoReport
+import io.github.aakira.napier.Napier
 
 class VideoPlayerRepository(
-    val aid: String,// av号
+    val aid: String, // av号
     override val title: String,
     override val coverUrl: String,
     override var id: String, // cid
@@ -15,18 +16,17 @@ class VideoPlayerRepository(
 ) : BasePlayerRepository() {
 
     override suspend fun getPlayerUrl(quality: Int, fnval: Int): Result<PlayerSourceInfo> {
-        return videoPlayurlData(quality, fnval, aid, id).map { it ->
+        return videoPlayurlData(quality, fnval, aid, id).map {
             val res = it.data!!
             val dash = res.dash
             val durl = res.durl.orEmpty()
 
             PlayerSourceInfo(
-                res.lastPlayCid.orEmpty(),
-                res.lastPlayTime ?: 0,
                 res.quality,
                 res.acceptQuality.mapIndexed { index, i ->
                     PlayerSourceInfo.AcceptInfo(i, res.acceptDescription[index])
-                }, if (dash != null) {
+                },
+                if (dash != null) {
                     val duration = dash.duration * 1000L
                     val dashSource = DashSource(res.quality, dash)
                     val dashVideo = dashSource.getDashVideo()!!
@@ -53,9 +53,9 @@ class VideoPlayerRepository(
                 SubtitleSourceInfo(
                     id = it.id,
                     lan = it.lan,
-                    lan_doc = it.lanDoc,
-                    subtitle_url = it.subtitleUrl,
-                    ai_status = it.aiStatus,
+                    lanDoc = it.lanDoc,
+                    subtitleUrl = it.subtitleUrl,
+                    aiStatus = it.aiStatus,
                 )
             }
         }, onFailure = {
@@ -65,11 +65,12 @@ class VideoPlayerRepository(
 
     override suspend fun historyReport(progress: Long) {
         try {
-            val realtimeProgress = progress.toString()  // 秒数
+            val realtimeProgress = progress.toString() // 秒数
             videoReport(realtimeProgress, aid, id)
         } catch (e: Exception) {
-            e.printStackTrace()
+            Napier.e(e) {
+                "report progress failed"
+            }
         }
     }
-
 }

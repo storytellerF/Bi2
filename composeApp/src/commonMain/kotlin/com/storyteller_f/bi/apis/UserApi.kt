@@ -1,11 +1,11 @@
 package com.storyteller_f.bi.apis
 
 import com.storyteller_f.bi.entity.ListResponse
+import com.storyteller_f.bi.entity.MediaDetailInfo
+import com.storyteller_f.bi.entity.MediaListInfo
 import com.storyteller_f.bi.entity.ResultInfo
-import com.storyteller_f.bi.entity.media.MediaDetailInfo
-import com.storyteller_f.bi.entity.media.MediaListInfo
-import com.storyteller_f.bi.entity.user.SpaceInfo
-import com.storyteller_f.bi.network.VideoDatumList
+import com.storyteller_f.bi.entity.SpaceInfo
+import com.storyteller_f.bi.entity.VideoDatumList
 import de.jensklingenberg.ktorfit.http.GET
 import de.jensklingenberg.ktorfit.http.Query
 
@@ -24,7 +24,6 @@ interface UserApi {
         @Query("ps") pageSize: Int,
     ): ResultInfo<ListResponse<MediaListInfo>>
 
-
     /**
      * 收藏夹列表详情
      */
@@ -36,6 +35,5 @@ interface UserApi {
     ): ResultInfo<MediaDetailInfo>
 
     @GET("x/v2/history/toview")
-    suspend fun toBePlay(): ResultInfo<VideoDatumList>
+    suspend fun playList(): ResultInfo<VideoDatumList>
 }
-

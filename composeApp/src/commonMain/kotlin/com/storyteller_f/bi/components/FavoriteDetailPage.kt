@@ -8,15 +8,14 @@ import app.cash.paging.compose.collectAsLazyPagingItems
 import app.cash.paging.compose.itemContentType
 import app.cash.paging.compose.itemKey
 import com.storyteller_f.bi.data.*
-import com.storyteller_f.bi.entity.media.MediasInfo
+import com.storyteller_f.bi.entity.MediasInfo
 import com.storyteller_f.bi.network.Service.favoriteDetail
-import com.storyteller_f.bi.ui.StateView
 import com.storyteller_f.bi.player.PlayerSession
-
+import com.storyteller_f.bi.ui.StateView
 
 @Composable
 fun FavoriteDetailPage(id: String, playVideo: (PlayerSession) -> Unit) {
-    val detailViewModel = viewModel(
+    val detailViewModel = customViewModel(
         FavoriteDetailViewModel::class
     ) {
         set(FavoriteIdKey, id)
@@ -27,8 +26,7 @@ fun FavoriteDetailPage(id: String, playVideo: (PlayerSession) -> Unit) {
             items(
                 count = lazyPagingItems.itemCount,
                 key = lazyPagingItems.itemKey(),
-                contentType = lazyPagingItems.itemContentType(
-                )
+                contentType = lazyPagingItems.itemContentType()
             ) { index ->
                 val item = lazyPagingItems[index]
                 VideoItem(
@@ -41,7 +39,6 @@ fun FavoriteDetailPage(id: String, playVideo: (PlayerSession) -> Unit) {
             }
         }
     }
-
 }
 
 class FavoriteDetailViewModel(id: String) : PagingViewModel<Int, MediasInfo>({
@@ -61,7 +58,7 @@ class FavoriteDetailSource(val id: String) : PagingSource<Int, MediasInfo>() {
         val currentPage = lastPage + 1
         val pageSize = params.loadSize
         return favoriteDetail(currentPage, pageSize, id).fold(onSuccess = { data ->
-            val medias = data.data?.medias.orEmpty()
+            val medias = data.`data`?.medias.orEmpty()
             LoadResult.Page(
                 medias,
                 null,
@@ -71,5 +68,4 @@ class FavoriteDetailSource(val id: String) : PagingSource<Int, MediasInfo>() {
             LoadResult.Error(it)
         })
     }
-
 }

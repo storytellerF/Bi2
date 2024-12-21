@@ -19,8 +19,8 @@ import app.cash.paging.compose.collectAsLazyPagingItems
 import app.cash.paging.compose.itemContentType
 import app.cash.paging.compose.itemKey
 import com.storyteller_f.bi.data.PagingViewModel
-import com.storyteller_f.bi.data.viewModel
-import com.storyteller_f.bi.entity.media.MediaListInfo
+import com.storyteller_f.bi.data.customViewModel
+import com.storyteller_f.bi.entity.MediaListInfo
 import com.storyteller_f.bi.gs.UserInfoState
 import com.storyteller_f.bi.network.Service.favoriteList
 import com.storyteller_f.bi.ui.RemoteImage
@@ -29,7 +29,7 @@ import com.storyteller_f.bi.ui.StateView
 
 @Composable
 fun FavoritePage(openMediaList: (MediaListInfo) -> Unit = {}) {
-    val favoriteViewModel = viewModel(FavoriteViewModel::class)
+    val favoriteViewModel = customViewModel(FavoriteViewModel::class)
     val pagingItems = favoriteViewModel.flow.collectAsLazyPagingItems()
     StateView(pagingItems) {
         LazyVerticalGrid(GridCells.Adaptive(150.dp)) {
@@ -44,24 +44,29 @@ fun FavoritePage(openMediaList: (MediaListInfo) -> Unit = {}) {
     }
 }
 
-
 @Composable
 fun MediaListContainer(
     mediaListInfo: MediaListInfo,
     openMediaList: (MediaListInfo) -> Unit = {}
 ) {
-    Box(contentAlignment = Alignment.Center, modifier = Modifier.clickable {
-        openMediaList(mediaListInfo)
-    }) {
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier.clickable {
+            openMediaList(mediaListInfo)
+        }
+    ) {
         val modifier = Modifier.aspectRatio(16f / 9)
         StandBy(modifier) {
             RemoteImage(
-                model = "${mediaListInfo.cover}@672w_378h_1c_", contentDescription = "cover", modifier = modifier
+                model = "${mediaListInfo.cover}@672w_378h_1c_",
+                contentDescription = "cover",
+                modifier = modifier
             )
         }
 
         Text(
-            text = mediaListInfo.title, modifier = Modifier
+            text = mediaListInfo.title,
+            modifier = Modifier
                 .background(Color.White)
                 .padding(16.dp)
         )
@@ -85,13 +90,13 @@ class FavoriteSource(private val mid: String) : PagingSource<Int, MediaListInfo>
             favoriteList(key, mid, params.loadSize).fold(onSuccess = { res ->
                 val data = res.data!!
                 LoadResult.Page(
-                    data.list, prevKey = null, nextKey = if (data.hasMore) key + 1 else null
+                    data.list,
+                    prevKey = null,
+                    nextKey = if (data.hasMore) key + 1 else null
                 )
             }, onFailure = {
                 LoadResult.Error(it)
             })
         }
-
     }
-
 }

@@ -1,7 +1,7 @@
 package com.storyteller_f.bi.components
 
-import com.storyteller_f.bi.repository.BasePlayerRepository
 import com.storyteller_f.bi.player.MediaSourceGroup
+import com.storyteller_f.bi.repository.BasePlayerRepository
 
 abstract class PlayerService(
     val size: VideoSize?,

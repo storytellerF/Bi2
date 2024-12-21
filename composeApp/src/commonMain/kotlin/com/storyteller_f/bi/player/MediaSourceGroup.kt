@@ -29,6 +29,5 @@ object Player {
                 else -> throw Exception("not support $type")
             }
         }
-
     }
 }

@@ -11,43 +11,38 @@ import app.cash.paging.compose.LazyPagingItems
 import app.cash.paging.compose.collectAsLazyPagingItems
 import app.cash.paging.compose.itemContentType
 import app.cash.paging.compose.itemKey
-import com.storyteller_f.bi.ui.RemoteImage
-import com.storyteller_f.bi.ui.StandBy
-import com.storyteller_f.bi.ui.StateView
+import bilibili.main.community.reply.v1.ReplyInfo
 import com.storyteller_f.bi.data.*
-import com.storyteller_f.bi.network.CommentInfo
 import com.storyteller_f.bi.network.CommentReplyCursor
 import com.storyteller_f.bi.network.Service
-import com.storyteller_f.bi.ui.topRefreshing
+import com.storyteller_f.bi.ui.*
 
-
-
-class CommentViewModel(oid: String) : PagingViewModel<Long, CommentInfo>({
+class CommentViewModel(oid: String) : PagingViewModel<Long, ReplyInfo>({
     SimplePagingSource {
         Service.commentResult(oid, it)
     }
 })
 
 class CommentReplyViewModel(oid: Long, commentId: Long) :
-    PagingViewModel<CommentReplyCursor, CommentInfo>({
+    PagingViewModel<CommentReplyCursor, ReplyInfo>({
         SimplePagingSource {
             Service.commentReplyResult(oid, commentId, it)
         }
     })
 
-
 @Composable
 fun CommentsPage(videoId: String, viewComment: (Long) -> Unit = {}) {
-    val model = viewModel(CommentViewModel::class) {
-        CommentViewModel(videoId)
+    val model = customViewModel(CommentViewModel::class, keys = listOf("comments", videoId)) {
+        set(VideoId, videoId)
     }
     CommentList(0, model.flow.collectAsLazyPagingItems(), viewComment)
 }
 
 @Composable
 fun CommentReplyPage(cid: Long, oid: Long) {
-    val model = viewModel(CommentReplyViewModel::class, listOf(cid, oid)) {
-        CommentReplyViewModel(oid, cid)
+    val model = customViewModel(CommentReplyViewModel::class, keys = listOf(cid, oid)) {
+        set(VideoIdLong, oid)
+        set(CommentId, cid)
     }
     CommentList(cid, pagingItems = model.flow.collectAsLazyPagingItems())
 }
@@ -55,10 +50,10 @@ fun CommentReplyPage(cid: Long, oid: Long) {
 @Composable
 private fun CommentList(
     parent: Long,
-    pagingItems: LazyPagingItems<CommentInfo>,
+    pagingItems: LazyPagingItems<ReplyInfo>,
     viewComment: (Long) -> Unit = {}
 ) {
-    StateView(pagingItems.loadState.refresh) {
+    StateView(pagingItems) {
         LazyColumn {
             topRefreshing(pagingItems)
             items(
@@ -67,17 +62,18 @@ private fun CommentList(
                 contentType = pagingItems.itemContentType()
             ) { index ->
                 val item = pagingItems[index]
-                if (item != null)
+                if (item != null) {
                     CommentItem(item = item, viewComment, parent)
+                }
             }
+            bottomAppending(pagingItems)
         }
     }
 }
 
-
 @Composable
 fun CommentItem(
-    item: CommentInfo,
+    item: ReplyInfo,
     viewComment: (Long) -> Unit = {},
     parent: Long = 0,
 ) {
@@ -90,26 +86,28 @@ fun CommentItem(
                 viewComment(item.id)
             }
     ) {
+        val basic = item.member_v2?.basic
         Row {
             val modifier = Modifier.size(30.dp)
             StandBy(modifier) {
                 RemoteImage(
-                    model = item.face,
+                    model = basic?.face,
                     contentDescription = "avatar",
                     modifier = modifier
                 )
             }
-            Text(
-                text = item.name,
-                modifier = Modifier
-                    .padding(start = 8.dp)
-                    .weight(1f),
-                maxLines = 2
-            )
+            if (basic != null) {
+                Text(
+                    text = basic.name,
+                    modifier = Modifier
+                        .padding(start = 8.dp)
+                        .weight(1f),
+                    maxLines = 2
+                )
+            }
             Text(text = "like ${item.like} reply ${item.count}")
         }
-        Text(text = item.message, modifier = Modifier.padding(top = 8.dp))
+        item.content?.message?.let { Text(text = it, modifier = Modifier.padding(top = 8.dp)) }
         Text(text = "${item.parent} ${item.dialog} ${item.id} ${item.type}")
     }
 }
-

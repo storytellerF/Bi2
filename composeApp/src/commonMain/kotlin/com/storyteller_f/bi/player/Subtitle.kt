@@ -1,15 +1,14 @@
 package com.storyteller_f.bi.player
 
-import com.storyteller_f.bi.repository.BasePlayerRepository
-import com.storyteller_f.bi.repository.SubtitleSourceInfo
-import com.storyteller_f.bi.entity.player.SubtitleJsonInfo
+import com.storyteller_f.bi.entity.SubtitleJsonInfo
 import com.storyteller_f.bi.fileSystem
 import com.storyteller_f.bi.network.ktorClient
-import com.storyteller_f.bi.realPath
+import com.storyteller_f.bi.repository.BasePlayerRepository
+import com.storyteller_f.bi.repository.SubtitleSourceInfo
+import com.storyteller_f.bi.userPath
 import io.ktor.client.call.*
 import io.ktor.client.request.*
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.withContext
 import net.sergeych.sprintf.sprintf
 import okio.Path.Companion.toPath
@@ -18,30 +17,29 @@ suspend fun BasePlayerRepository.subtitleCandidates(): List<SubtitleCandidate> {
     val subtitles = getSubtitles()
 
     val pairs = subtitles.map { info: SubtitleSourceInfo ->
-        val path = realPath("/subtitle/$id/${info.lan}.srt")
+        val path = userPath("/subtitle/$id/${info.lan}.srt")
         if (fileSystem.exists(path.toPath())) {
             path to info to null
         } else {
-            val res = ktorClient.get(info.subtitle_url).body<SubtitleJsonInfo>()
+            val res = ktorClient.get(info.subtitleUrl).body<SubtitleJsonInfo>()
             writeToFile(res, path)
             path to info to res
         }
     }
 
-
     val configurations = pairs.map {
         it.first
     }.map { (path, info) ->
-        SubtitleCandidate(path, info.lan_doc, info.id, info.lan)
+        SubtitleCandidate(path, info.lanDoc, info.id, info.lan)
     }
     val mixedSubtitle =
         createMixedSubtitleIfNeed(pairs, subtitles)
-    return if (mixedSubtitle != null)
+    return if (mixedSubtitle != null) {
         configurations + mixedSubtitle
-    else
+    } else {
         configurations
+    }
 }
-
 
 private suspend fun BasePlayerRepository.createMixedSubtitleIfNeed(
     pairs: List<Pair<Pair<String, SubtitleSourceInfo>, SubtitleJsonInfo?>>,
@@ -51,10 +49,10 @@ private suspend fun BasePlayerRepository.createMixedSubtitleIfNeed(
     val infoList = pairs.mapNotNull {
         it.second
     }
-    val path = realPath("subtitle/$id/mix.srt")
+    val path = userPath("subtitle/$id/mix.srt")
     if (pairs.size == 2 &&
-        infoList.size == 2
-        && subtitles.size == 2 &&
+        infoList.size == 2 &&
+        subtitles.size == 2 &&
         lanList.any {
             it.contains("zh")
         } && lanList.any {
@@ -66,8 +64,8 @@ private suspend fun BasePlayerRepository.createMixedSubtitleIfNeed(
         val first = infoList.first()
         val jsonInfo = infoList.last()
 
-        writeToFile(first, path) { it, i ->
-            "${it.content}\n${jsonInfo.body[i].content}"
+        writeToFile(first, path) { itemInfo, i ->
+            "${itemInfo.content}\n${jsonInfo.body[i].content}"
         }
         return SubtitleCandidate(path, "mix", "mix", "mix")
     }
@@ -77,7 +75,7 @@ private suspend fun BasePlayerRepository.createMixedSubtitleIfNeed(
 private suspend fun writeToFile(
     jInfo: SubtitleJsonInfo,
     file: String,
-    c: (SubtitleJsonInfo.ItemInfo, Int) -> String = { it, _ -> it.content }
+    c: (SubtitleJsonInfo.ItemInfo, Int) -> String = { itemInfo, _ -> itemInfo.content }
 ) {
     val content = jInfo.body.mapIndexed { index, itemInfo ->
         val toDuration = formatDuration(
@@ -88,7 +86,7 @@ private suspend fun writeToFile(
             ${index + 1}
             $fromDuration --> $toDuration
             ${c(itemInfo, index)}
-            """.trimIndent()
+        """.trimIndent()
     }.joinToString("\n\n")
     withContext(Dispatchers.IO) {
         fileSystem.write(file.toPath()) {

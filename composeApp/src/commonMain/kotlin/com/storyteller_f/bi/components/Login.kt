@@ -12,14 +12,17 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.storyteller_f.bi.data.ViewModel
-import com.storyteller_f.bi.data.viewModel
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.storyteller_f.bi.LOCALAppNav
+import com.storyteller_f.bi.data.customViewModel
 import com.storyteller_f.bi.gs.LoginInfoState
 import com.storyteller_f.bi.gs.UserInfoState
 import com.storyteller_f.bi.network.*
 import com.storyteller_f.bi.network.Service.requestQrcode
 import com.storyteller_f.bi.network.Service.requestQrcodeResult
 import com.storyteller_f.bi.network.Service.userAccountInfo
+import io.github.aakira.napier.Napier
 import io.github.alexzhirkevich.qrose.options.QrPixelShape
 import io.github.alexzhirkevich.qrose.options.QrShapes
 import io.github.alexzhirkevich.qrose.options.roundCorners
@@ -27,9 +30,8 @@ import io.github.alexzhirkevich.qrose.rememberQrCodePainter
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
-import moe.tlaster.precompose.viewmodel.viewModelScope
 
-class QrcodeLoginViewModel() : ViewModel() {
+class QrcodeLoginViewModel : ViewModel() {
     val state = MutableStateFlow<LoadingState?>(null)
     val qrcodeUrl = MutableStateFlow<String?>(null)
     val checkState = MutableStateFlow<LoadingState?>(null)
@@ -42,10 +44,10 @@ class QrcodeLoginViewModel() : ViewModel() {
     private fun load() {
         viewModelScope.launch {
             try {
-                state.value = LoadingState.Loading("")
+                state.value = LoadingState.Loading("load qrcode...")
                 val res = requestQrcode()
                 val data = res.data
-                if (res.isSuccess() && data!!.url.isNotEmpty() && data.authCode.isNotEmpty()) {
+                if (res.isSuccess && data!!.url.isNotEmpty() && data.authCode.isNotEmpty()) {
                     qrcodeUrl.value = data.url
                     currentAuthCode = data.authCode
                     state.loaded()
@@ -54,10 +56,11 @@ class QrcodeLoginViewModel() : ViewModel() {
                     state.error(Exception(res.message))
                 }
             } catch (e: Throwable) {
-                e.printStackTrace()
+                Napier.e(e) {
+                    "request qrcode failed"
+                }
                 state.error(e)
             }
-
         }
     }
 
@@ -105,21 +108,18 @@ class QrcodeLoginViewModel() : ViewModel() {
 
     private suspend fun getUserInfo() {
         val res = userAccountInfo()
-        checkState.value = if (res.isSuccess()) {
+        checkState.value = if (res.isSuccess) {
             UserInfoState.saveUserInfo(res.data)
             LoadingState.Done(1)
         } else {
             LoadingState.Error(Exception(res.message))
         }
-
     }
 }
 
-
 @Composable
 fun LoginInternal(
-    state: LoginState,
-    back: () -> Unit = {}
+    state: LoginState
 ) {
     val (qrcodeUrl, loadingState, checkState) = state
     val qrcodePainter = rememberQrCodePainter(
@@ -159,6 +159,7 @@ fun LoginInternal(
                 )
             }
         }
+        val appNav = LOCALAppNav.current
         if (checkState != null) {
             Text(
                 modifier = Modifier
@@ -166,8 +167,9 @@ fun LoginInternal(
                     .background(MaterialTheme.colorScheme.secondaryContainer)
                     .padding(8.dp)
                     .clickable {
-                        if (checkState is LoadingState.Done)
-                            back()
+                        if (checkState is LoadingState.Done) {
+                            appNav.gotoHome()
+                        }
                     },
                 text = when (checkState) {
                     is LoadingState.Done -> "扫码成功，点击返回"
@@ -180,10 +182,10 @@ fun LoginInternal(
 }
 
 @Composable
-fun LoginPage(back: () -> Unit) {
-    val loginViewModel = viewModel(QrcodeLoginViewModel::class)
+fun LoginPage() {
+    val loginViewModel = customViewModel(QrcodeLoginViewModel::class)
     val loadingState by loginViewModel.state.collectAsState()
     val url by loginViewModel.qrcodeUrl.collectAsState()
     val checkState by loginViewModel.checkState.collectAsState()
-    LoginInternal(LoginState(url, loadingState, checkState), back)
+    LoginInternal(LoginState(url, loadingState, checkState))
 }

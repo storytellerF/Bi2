@@ -1,35 +1,37 @@
 [versions]
-agp = "8.5.2"
-android-compileSdk = "34"
+agp = "8.7.3"
+android-compileSdk = "35"
 android-minSdk = "24"
-android-targetSdk = "34"
+android-targetSdk = "35"
 androidx-activityCompose = "1.9.3"
 appdirs = "1.2.2"
-compose-plugin = "1.7.0"
+compose-plugin = "1.7.1"
+navigationCompose = "2.8.0-alpha10"
 imageLoader = "1.9.0"
 insetsx = "0.1.0-alpha10"
 kotlin = "2.0.21"
 kotlinxCoroutinesCore = "1.9.0"
 kotlinxSerializationJson = "1.7.3"
-ksp = "2.0.21-1.0.25"
+ksp = "2.0.21-1.0.27"
 kotlinxDatetime = "0.6.1"
-ktorfitVersion = "2.1.0"
-ktorVersion = "3.0.0"
+ktorfitVersion = "2.2.0"
+ktorVersion = "3.0.2"
 material3WindowSizeClassMultiplatform = "0.5.0"
 md = "0.5.3"
-media3ExoplayerDash = "1.4.1"
-media3Exoplayer = "1.4.1"
+media3ExoplayerDash = "1.5.1"
+media3Exoplayer = "1.5.1"
 mp_stools = "1.5.1"
 multiplatformSettingsNoArg = "1.2.0"
 napier = "2.7.1"
 pagingCommon = "3.3.0-alpha02-0.5.1"
-precompose = "1.6.2"
 qrcodeKotlinJvm = "4.2.0"
 qrose = "1.0.1"
 uriKmp = "0.0.18"
 uuid = "0.8.4"
 vlcj = "4.8.3"
+detektVersion = "1.23.7"
 wireRuntime = "5.1.0"
+kover = "0.7.4"
 
 
 [libraries]
@@ -48,6 +50,9 @@ ktor-client-logging = { module = "io.ktor:ktor-client-logging", version.ref = "k
 ktor-client-serialization = { module = "io.ktor:ktor-client-serialization", version.ref = "ktorVersion" }
 ktor-serialization-kotlinx-json = { module = "io.ktor:ktor-serialization-kotlinx-json", version.ref = "ktorVersion" }
 ktorfit-lib = { module = "de.jensklingenberg.ktorfit:ktorfit-lib", version.ref = "ktorfitVersion" }
+detekt-formatting = { module = "io.gitlab.arturbosch.detekt:detekt-formatting", version.ref = "detektVersion" }
+detekt-rules-libraries = { module = "io.gitlab.arturbosch.detekt:detekt-rules-libraries", version.ref = "detektVersion" }
+detekt-rules-ruleauthors = { module = "io.gitlab.arturbosch.detekt:detekt-rules-ruleauthors", version.ref = "detektVersion" }
 material3-window-size-multiplatform = { module = "dev.chrisbanes.material3:material3-window-size-class-multiplatform", version.ref = "material3WindowSizeClassMultiplatform" }
 md = { module = "org.kotlincrypto.hash:md", version.ref = "md" }
 mp_stools = { module = "net.sergeych:mp_stools", version.ref = "mp_stools" }
@@ -55,8 +60,7 @@ multiplatform-settings-no-arg = { module = "com.russhwolf:multiplatform-settings
 napier = { module = "io.github.aakira:napier", version.ref = "napier" }
 paging-common = { module = "app.cash.paging:paging-common", version.ref = "pagingCommon" }
 paging-compose-common = { module = "app.cash.paging:paging-compose-common", version.ref = "pagingCommon" }
-precompose = { module = "moe.tlaster:precompose", version.ref = "precompose" }
-precompose-viewmodel = { module = "moe.tlaster:precompose-viewmodel", version.ref = "precompose" }
+navigation-compose = { module = "org.jetbrains.androidx.navigation:navigation-compose", version.ref = "navigationCompose" }
 qrcode-kotlin-jvm = { module = "io.github.g0dkar:qrcode-kotlin-jvm", version.ref = "qrcodeKotlinJvm" }
 qrose = { module = "io.github.alexzhirkevich:qrose", version.ref = "qrose" }
 uri-kmp = { module = "com.eygraber:uri-kmp", version.ref = "uriKmp" }
@@ -74,3 +78,4 @@ kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref =
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 ktorfit = { id = "de.jensklingenberg.ktorfit", version.ref = "ktorfitVersion"}
 wire = { id = "com.squareup.wire", version.ref = "wireRuntime" }
+kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kover" }

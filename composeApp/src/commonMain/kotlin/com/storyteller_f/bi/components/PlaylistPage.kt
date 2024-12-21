@@ -5,27 +5,30 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import com.storyteller_f.bi.data.viewModel
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.storyteller_f.bi.LOCALAppNav
+import com.storyteller_f.bi.data.customViewModel
+import com.storyteller_f.bi.entity.VideoDatumList
 import com.storyteller_f.bi.network.*
 import com.storyteller_f.bi.network.Service.playList
-import com.storyteller_f.bi.ui.StateView
 import com.storyteller_f.bi.player.PlayerSession
+import com.storyteller_f.bi.ui.StateView
 import kotlinx.coroutines.launch
-import com.storyteller_f.bi.data.ViewModel
-import moe.tlaster.precompose.viewmodel.viewModelScope
 
 @Composable
-fun PlaylistPage(openVideo: (PlayerSession) -> Unit = { }) {
-    val viewModel = viewModel(ToBePlayedViewModel::class)
+fun PlaylistPage() {
+    val viewModel = customViewModel(ToBePlayedViewModel::class)
     val list by viewModel.datum.collectAsState()
     val data = list?.list.orEmpty()
+    val appNav = LOCALAppNav.current
     StateView(viewModel.handler) {
         LazyColumn {
             items(data, {
                 it.aid.toString() + " " + it.bvid
             }) {
                 VideoItem(it.pic, it.title, "${it.aid} ${it.bvid} ${it.cid} ${it.tid}") {
-                    openVideo(PlayerSession.VideoSession(it.bvid, "archive", 0L))
+                    appNav.gotoVideo(PlayerSession.VideoSession(it.bvid, "archive", 0L))
                 }
             }
         }

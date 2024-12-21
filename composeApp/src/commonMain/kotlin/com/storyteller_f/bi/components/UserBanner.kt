@@ -14,10 +14,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.storyteller_f.bi.data.ViewModel
-import com.storyteller_f.bi.data.viewModel
-import com.storyteller_f.bi.entity.user.SpaceInfo
-import com.storyteller_f.bi.entity.user.UserInfo
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.storyteller_f.bi.LOCALAppNav
+import com.storyteller_f.bi.data.customViewModel
+import com.storyteller_f.bi.entity.SpaceInfo
+import com.storyteller_f.bi.entity.UserInfo
 import com.storyteller_f.bi.gs.UserInfoState
 import com.storyteller_f.bi.network.LoadingState
 import com.storyteller_f.bi.network.Service.requestUserInfo
@@ -28,22 +30,22 @@ import com.storyteller_f.bi.ui.RemoteImage
 import com.storyteller_f.bi.ui.StandBy
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
-import moe.tlaster.precompose.viewmodel.viewModelScope
 
 @Composable
-fun UserBanner(u: UserInfo?, login: () -> Unit = {}) {
+fun UserBanner(u: UserInfo?) {
     val coverSize = Modifier
         .size(60.dp)
     val modifier = Modifier
-        .padding(16.dp)
         .fillMaxWidth()
     if (u != null) {
         val face = u.face
-        Column {
+        Column(Modifier.padding(20.dp)) {
             Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
                 StandBy(coverSize) {
                     RemoteImage(
-                        model = face, contentDescription = "avatar", modifier = coverSize
+                        model = face,
+                        contentDescription = "avatar",
+                        modifier = coverSize
                     )
                 }
                 Text(
@@ -56,20 +58,23 @@ fun UserBanner(u: UserInfo?, login: () -> Unit = {}) {
                 Spacer(modifier = Modifier.size(8.dp))
                 Dot(u.level.toString())
             }
-            val v = viewModel(UserBannerViewModel::class)
+            Spacer(Modifier.height(10.dp))
+            val v = customViewModel(UserBannerViewModel::class)
             val info by v.data.collectAsState()
-            Text(text = info?.card?.sign ?: "不说两句？", modifier = Modifier.padding(8.dp))
-            Row(modifier = Modifier.padding(8.dp)) {
+            Text(text = info?.card?.sign ?: "不说两句？")
+            Spacer(Modifier.height(10.dp))
+            Row {
                 Badge("follower ${u.follower}")
                 Spacer(modifier = Modifier.padding(start = 8.dp))
                 Badge("following ${u.following}")
             }
         }
     } else {
+        val appNav = LOCALAppNav.current
         Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
             Box(modifier = coverSize.background(Color.Blue))
             Button(modifier = Modifier.padding(start = 8.dp), onClick = {
-                login()
+                appNav.gotoLogin()
             }) {
                 Text(text = "login")
             }
@@ -80,12 +85,14 @@ fun UserBanner(u: UserInfo?, login: () -> Unit = {}) {
 @Composable
 private fun Badge(text: String) {
     Text(
-        text = text, modifier = Modifier
+        text = text,
+        modifier = Modifier
             .background(
                 MaterialTheme.colorScheme.secondary,
                 RoundedCornerShape(16.dp)
             )
-            .padding(horizontal = 16.dp, vertical = 8.dp), color = MaterialTheme.colorScheme.onSecondary
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        color = MaterialTheme.colorScheme.onSecondary
     )
 }
 
@@ -97,7 +104,8 @@ private fun Dot(s: String = "") {
             .background(
                 MaterialTheme.colorScheme.tertiary,
                 RoundedCornerShape(16.dp)
-            ), contentAlignment = Alignment.Center
+            ),
+        contentAlignment = Alignment.Center
     ) {
         Text(text = s, fontSize = 12.sp, color = MaterialTheme.colorScheme.onTertiary)
     }
@@ -127,5 +135,4 @@ class UserBannerViewModel : ViewModel() {
             })
         }
     }
-
 }

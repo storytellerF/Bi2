@@ -22,26 +22,18 @@ import app.cash.paging.compose.collectAsLazyPagingItems
 import app.cash.paging.compose.itemContentType
 import app.cash.paging.compose.itemKey
 import bilibili.app.dynamic.v2.ModuleDynamicType
+import com.storyteller_f.bi.LOCALAppNav
 import com.storyteller_f.bi.data.PagingViewModel
-import com.storyteller_f.bi.data.viewModel
+import com.storyteller_f.bi.data.customViewModel
 import com.storyteller_f.bi.network.MomentsDataInfo
 import com.storyteller_f.bi.network.Service.momentRequest
 import com.storyteller_f.bi.network.loadResult
-import com.storyteller_f.bi.ui.*
 import com.storyteller_f.bi.player.PlayerSession
-
-
-@Composable
-fun MomentsPage(openVideo: (PlayerSession) -> Unit) {
-    val viewModel = viewModel(MomentsViewModel::class)
-    MomentsPageInternal(viewModel, openVideo)
-}
+import com.storyteller_f.bi.ui.*
 
 @Composable
-private fun MomentsPageInternal(
-    viewModel: MomentsViewModel,
-    openVideo: (PlayerSession) -> Unit
-) {
+fun MomentsPage() {
+    val viewModel = customViewModel(MomentsViewModel::class)
     val lazyPagingItems = viewModel.flow.collectAsLazyPagingItems()
     StateView(pagingItems = lazyPagingItems) {
         LazyColumn {
@@ -49,13 +41,13 @@ private fun MomentsPageInternal(
             items(
                 count = lazyPagingItems.itemCount,
                 key = lazyPagingItems.itemKey(),
-                contentType = lazyPagingItems.itemContentType(
-                )
+                contentType = lazyPagingItems.itemContentType()
             ) { index ->
                 val item = lazyPagingItems[index]
                 if (item != null) {
+                    val appNav = LOCALAppNav.current
                     MomentItem(item) {
-                        openVideo(PlayerSession.VideoSession(it, "archive", 0))
+                        appNav.gotoVideo(PlayerSession.VideoSession(it, "archive", 0))
                     }
                 }
             }
@@ -66,7 +58,8 @@ private fun MomentsPageInternal(
 
 @Composable
 fun MomentItem(
-    momentsDataInfo: MomentsDataInfo, watchVideo: (String) -> Unit = {}
+    momentsDataInfo: MomentsDataInfo,
+    watchVideo: (String) -> Unit = {}
 ) {
     val authorSize = Modifier.size(40.dp)
     Column(
@@ -101,21 +94,23 @@ fun MomentItem(
     }
 }
 
-
 @Composable
 fun ThumbUp(
-    text: String = "1", imageVector: ImageVector = Icons.Filled.ThumbUp, description: String = ""
+    text: String = "1",
+    imageVector: ImageVector = Icons.Filled.ThumbUp,
+    description: String = ""
 ) {
     Row(
         modifier = Modifier.background(MaterialTheme.colorScheme.primaryContainer, RoundedCornerShape(8.dp))
-            .padding(horizontal = 12.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically
+            .padding(horizontal = 12.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(imageVector = imageVector, contentDescription = description)
         Text(text = text, modifier = Modifier.padding(start = 8.dp))
     }
 }
 
-class MomentsViewModel() : PagingViewModel<Pair<String, String>, MomentsDataInfo>({
+class MomentsViewModel : PagingViewModel<Pair<String, String>, MomentsDataInfo>({
     MomentsPagingSource()
 })
 

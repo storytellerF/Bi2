@@ -21,13 +21,18 @@ import java.util.*
 import kotlin.time.Duration.Companion.seconds
 
 class DesktopPlayerService(
-    size: VideoSize?, initProgress: Long, reportHistory: () -> Unit, repository: BasePlayerRepository?,
+    size: VideoSize?,
+    initProgress: Long,
+    reportHistory: () -> Unit,
+    repository: BasePlayerRepository?,
     source: MediaSourceGroup?,
     val component: Component,
 ) : PlayerService(
-    size, initProgress,
+    size,
+    initProgress,
     reportHistory,
-    repository, source
+    repository,
+    source
 )
 
 @Composable
@@ -43,7 +48,6 @@ actual fun rememberPlayerService(
     val progress by remember {
         mutableLongStateOf(initProgress.coerceAtLeast(0L).seconds.inWholeMilliseconds)
     }
-
 
     val mediaPlayerComponent = remember { initializeMediaPlayerComponent() }
     val mediaPlayer = mediaPlayerComponent.mediaPlayer()
@@ -72,11 +76,13 @@ actual fun rememberPlayerService(
         initialValue = null,
         key1 = videoPlayerRepository
     ) {
-        value = if (videoPlayerRepository != null)
+        value = if (videoPlayerRepository != null) {
             withContext(Dispatchers.IO) {
                 Player.mediaSource(videoPlayerRepository).getOrNull()
             }
-        else null
+        } else {
+            null
+        }
     }
     LaunchedEffect(mediaPlayer, mediaSourceGroup) {
         val m = mediaSourceGroup
@@ -104,7 +110,7 @@ actual fun rememberPlayerService(
 actual fun VideoView(
     service: PlayerService,
     aspectRatio: Boolean,
-    startFullscreenMode: ((Boolean) -> Unit)?
+    switchFullscreenMode: ((Boolean) -> Unit)?
 ) {
     service as DesktopPlayerService
     val mediaPlayer = service.component.mediaPlayer()
@@ -131,7 +137,6 @@ fun initializeMediaPlayerComponent(): Component {
         EmbeddedMediaPlayerComponent()
     }
 }
-
 
 /**
  * Returns [MediaPlayer] from player components.

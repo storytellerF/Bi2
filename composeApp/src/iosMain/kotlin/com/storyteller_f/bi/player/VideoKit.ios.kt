@@ -31,7 +31,8 @@ class IosPlayerService(
     size,
     initProgress,
     reportHistory,
-    repository, source
+    repository,
+    source
 )
 
 @OptIn(ExperimentalForeignApi::class)
@@ -40,7 +41,6 @@ actual fun rememberPlayerService(
     videoPlayerRepository: BasePlayerRepository?,
     initProgress: Long
 ): State<PlayerService> {
-
     val scope = rememberCoroutineScope()
 
     var size by remember {
@@ -50,14 +50,15 @@ actual fun rememberPlayerService(
         mutableLongStateOf(initProgress.coerceAtLeast(0L).seconds.inWholeMilliseconds)
     }
 
-
     val mediaSourceGroup by produceState<MediaSourceGroup?>(
         initialValue = null,
         key1 = videoPlayerRepository
     ) {
-        value = if (videoPlayerRepository != null)
+        value = if (videoPlayerRepository != null) {
             Player.mediaSource(videoPlayerRepository).getOrNull()
-        else null
+        } else {
+            null
+        }
     }
     val avAsset by derivedStateOf {
         when (val m = mediaSourceGroup) {
@@ -163,5 +164,4 @@ actual fun VideoView(
             modifier = Modifier
         )
     }
-
 }

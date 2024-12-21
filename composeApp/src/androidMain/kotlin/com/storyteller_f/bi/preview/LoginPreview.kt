@@ -10,9 +10,10 @@ import com.storyteller_f.bi.network.LoginState
 
 @Preview
 @Composable
-fun LoginPreview(@PreviewParameter(LoginPreviewProvider::class) state: LoginState,
-                 back: () -> Unit = {}) {
-    LoginInternal(state, back)
+fun LoginPreview(
+    @PreviewParameter(LoginPreviewProvider::class) state: LoginState
+) {
+    LoginInternal(state)
 }
 
 class LoginPreviewProvider : PreviewParameterProvider<LoginState> {

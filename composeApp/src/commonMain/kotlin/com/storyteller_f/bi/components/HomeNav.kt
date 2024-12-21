@@ -5,6 +5,8 @@ import androidx.compose.material.icons.filled.Explore
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material3.Icon
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.vector.ImageVector
 
 sealed class HomeNavigationConfig(
@@ -15,12 +17,9 @@ sealed class HomeNavigationConfig(
 
     data object History : HomeNavigationConfig("/histories", "History", vector = Icons.Filled.History)
 
-
     data object Moments : HomeNavigationConfig("/moments", "Moments", vector = Icons.Filled.Explore)
 
-
     data object Playlist : HomeNavigationConfig("/playlist", "Playlist", vector = Icons.Filled.PlayArrow)
-
 
     data object Favorite : HomeNavigationConfig("/favorites", "Favorites", vector = Icons.Filled.Favorite)
 
@@ -34,4 +33,12 @@ sealed class HomeNavigationConfig(
                 Favorite,
             )
     }
+}
+
+@Composable
+fun NavItemIcon(screen: HomeNavigationConfig) {
+    Icon(
+        screen.vector,
+        contentDescription = screen.route
+    )
 }

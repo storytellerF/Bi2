@@ -4,7 +4,6 @@ import com.benasher44.uuid.uuid4
 import com.russhwolf.settings.Settings
 import com.russhwolf.settings.set
 
-
 private var vidCache: String = ""
 private val settings = Settings()
 

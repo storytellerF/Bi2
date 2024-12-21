@@ -77,7 +77,7 @@ kotlin {
             implementation(compose.ui)
             implementation(compose.components.resources)
             implementation(compose.material3AdaptiveNavigationSuite)
-
+            implementation(libs.navigation.compose)
 
             //jetbrains
             implementation(libs.kotlinx.datetime)
@@ -105,12 +105,11 @@ kotlin {
             implementation(libs.material3.window.size.multiplatform)
             implementation(libs.insetsx)
             //框架组件
-            implementation(libs.precompose)
-            implementation(libs.precompose.viewmodel)
             implementation(libs.paging.common)
             implementation(libs.paging.compose.common)
             implementation(libs.napier)
             implementation(libs.kotlinx.serialization.json)
+            implementation(kotlin("reflect"))
         }
         desktopMain.dependencies {
             implementation(compose.desktop.currentOs)

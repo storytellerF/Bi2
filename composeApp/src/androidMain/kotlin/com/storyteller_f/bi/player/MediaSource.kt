@@ -22,18 +22,21 @@ fun MediaSourceGroup.mediaSource(context: Context, source: BasePlayerRepository)
     return when (this) {
         is MediaSourceGroup.Parts -> {
             // 视频拼接
-            @Suppress("DEPRECATION") val mediaSource = ConcatenatingMediaSource().apply {
-                addMediaSources(url.map {
-                    ProgressiveMediaSource.Factory(dataSourceFactory)
-                        .createMediaSource(MediaItem.fromUri(it))
-                })
+            @Suppress("DEPRECATION")
+            val mediaSource = ConcatenatingMediaSource().apply {
+                addMediaSources(
+                    url.map {
+                        ProgressiveMediaSource.Factory(dataSourceFactory)
+                            .createMediaSource(MediaItem.fromUri(it))
+                    }
+                )
             }
-            if (subtitleMediaSources.isNotEmpty())
+            if (subtitleMediaSources.isNotEmpty()) {
                 MergingMediaSource(
                     mediaSource,
                     *subtitleMediaSources.toTypedArray()
                 )
-            else {
+            } else {
                 mediaSource
             }
         }
@@ -75,17 +78,16 @@ fun MediaSourceGroup.mediaSource(context: Context, source: BasePlayerRepository)
 @androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
 fun List<SubtitleCandidate>.subtitleMediaSources(
     context: Context,
-): List<SingleSampleMediaSource> {
-    return map {
-        MediaItem.SubtitleConfiguration.Builder(it.path.toUri())
-            .setMimeType(MimeTypes.APPLICATION_SUBRIP)
-            .setSelectionFlags(C.SELECTION_FLAG_DEFAULT)
-            .setLabel(it.label)
-            .setId(it.id)
-            .setRoleFlags(C.ROLE_FLAG_SUBTITLE)
-            .setLanguage(it.language).build()
-    }.map {
-        SingleSampleMediaSource.Factory(DefaultDataSource.Factory(context))
-            .createMediaSource(it, C.TIME_UNSET)
-    }
+) = map {
+    MediaItem.SubtitleConfiguration.Builder(it.path.toUri())
+        .setMimeType(MimeTypes.APPLICATION_SUBRIP)
+        .setSelectionFlags(C.SELECTION_FLAG_DEFAULT)
+        .setLabel(it.label)
+        .setId(it.id)
+        .setRoleFlags(C.ROLE_FLAG_SUBTITLE)
+        .setLanguage(it.language)
+        .build()
+}.map {
+    SingleSampleMediaSource.Factory(DefaultDataSource.Factory(context))
+        .createMediaSource(it, C.TIME_UNSET)
 }

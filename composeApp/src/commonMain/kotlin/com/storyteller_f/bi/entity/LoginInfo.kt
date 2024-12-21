@@ -1,4 +1,4 @@
-package com.storyteller_f.bi.entity.auth
+package com.storyteller_f.bi.entity
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -22,9 +22,10 @@ data class QrLoginInfo(
     @SerialName("token_info") val tokenInfo: TokenInfo,
 ) {
     fun toLoginInfo() = LoginInfo(
-        cookieInfo, sso, tokenInfo
+        cookieInfo,
+        sso,
+        tokenInfo
     )
-
 }
 
 @Serializable
@@ -43,7 +44,6 @@ data class Cookie(
     fun getValue(domain: String): String {
         return "$name=$value;Expires=$expires;Domain=$domain;${if (httpOnly == 1) "HTTPOnly;" else ""}"
     }
-
 }
 
 @Serializable
@@ -52,4 +52,10 @@ data class TokenInfo(
     @SerialName("expires_in") val expiresIn: Int,
     val mid: Long,
     @SerialName("refresh_token") val refreshToken: String,
+)
+
+@Serializable
+data class QRLoginScheme(
+    @SerialName("auth_code") val authCode: String,
+    val url: String,
 )

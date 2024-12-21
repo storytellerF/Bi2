@@ -74,7 +74,6 @@ fun <R : Any, S : Any> GrpcMethod<S, R>.grpcCall(): GrpcCall<S, R> {
                 r(request, callback)
             }
         }
-
     }
 }
 
@@ -161,8 +160,6 @@ fun <R : Any, S : Any> GrpcMethod<S, R>.grpcStreamingCall(): GrpcStreamingCall<S
             }
             return requestChannel to responseChannel
         }
-
-
     }
 }
 
@@ -170,14 +167,14 @@ private fun HttpResponse.headersMap() = headers.toMap().mapValues {
     it.value.first()
 }
 
-private suspend fun<S: Any, R: Any> GrpcMethod<S, R>.httpResponse(request: S) = grpcHttpClient.post {
+private suspend fun<S : Any, R : Any> GrpcMethod<S, R>.httpResponse(request: S) = grpcHttpClient.post {
     url {
         path(path)
     }
     setBody(requestAdapter.encode(request))
 }
 
-private suspend fun<S: Any, R: Any> GrpcMethod<S, R>.httpStatement(requestChannel: Channel<S>) =
+private suspend fun<S : Any, R : Any> GrpcMethod<S, R>.httpStatement(requestChannel: Channel<S>) =
     grpcHttpClient.preparePost {
         url {
             path(path)
@@ -186,24 +183,24 @@ private suspend fun<S: Any, R: Any> GrpcMethod<S, R>.httpStatement(requestChanne
     }
 
 object GrpcHeader {
-    const val IDENTIFY = "identify_v1";
-    const val USER_AGENT = "User-Agent";
-    const val APP_KEY = "APP-KEY";
-    const val BILI_META = "x-bili-metadata-bin";
-    const val AUTHORIZATION = "authorization";
-    const val BILI_DEVICE = "x-bili-device-bin";
-    const val BILI_NETWORK = "x-bili-network-bin";
-    const val BILI_RESTRICTION = "x-bili-restriction-bin";
-    const val BILI_LOCALE = "x-bili-locale-bin";
-    const val BILI_FAWKES = "x-bili-fawkes-req-bin";
-    const val BILI_MID = "x-bili-mid";
-    const val GRPC_ACCEPT_ENCODING_KEY = "grpc-accept-encoding";
-    const val GRPC_ACCEPT_ENCODING_VALUE = "identity,deflate,gzip";
-    const val GRPC_TIME_OUT_KEY = "grpc-timeout";
-    const val GRPC_TIME_OUT_VALUE = "20100m";
-    const val ENVIRONMENT = "env";
-    const val TRANSFER_ENCODING_KEY = "Transfer-Encoding";
-    const val TRANSFER_ENCODING_VALUE = "chunked";
+    const val IDENTIFY = "identify_v1"
+    const val USER_AGENT = "User-Agent"
+    const val APP_KEY = "APP-KEY"
+    const val BILI_META = "x-bili-metadata-bin"
+    const val AUTHORIZATION = "authorization"
+    const val BILI_DEVICE = "x-bili-device-bin"
+    const val BILI_NETWORK = "x-bili-network-bin"
+    const val BILI_RESTRICTION = "x-bili-restriction-bin"
+    const val BILI_LOCALE = "x-bili-locale-bin"
+    const val BILI_FAWKES = "x-bili-fawkes-req-bin"
+    const val BILI_MID = "x-bili-mid"
+    const val GRPC_ACCEPT_ENCODING_KEY = "grpc-accept-encoding"
+    const val GRPC_ACCEPT_ENCODING_VALUE = "identity,deflate,gzip"
+    const val GRPC_TIME_OUT_KEY = "grpc-timeout"
+    const val GRPC_TIME_OUT_VALUE = "20100m"
+    const val ENVIRONMENT = "env"
+    const val TRANSFER_ENCODING_KEY = "Transfer-Encoding"
+    const val TRANSFER_ENCODING_VALUE = "chunked"
     const val BUVID = "buvid"
 }
 
@@ -225,18 +222,9 @@ val grpcHeaderMap: Map<String, String>
         put(GrpcHeader.BILI_META, GrpcBinary.getMetadataBin(token))
         put(GrpcHeader.BILI_NETWORK, GrpcBinary.getNetworkBin())
         put(GrpcHeader.BILI_RESTRICTION, GrpcBinary.getRestrictionBin())
-        put(
-            GrpcHeader.GRPC_ACCEPT_ENCODING_KEY, GrpcHeader.GRPC_ACCEPT_ENCODING_VALUE
-        )
-        put(
-            GrpcHeader.GRPC_TIME_OUT_KEY, GrpcHeader.GRPC_TIME_OUT_VALUE
-        )
+//        put(GrpcHeader.GRPC_ACCEPT_ENCODING_KEY, GrpcHeader.GRPC_ACCEPT_ENCODING_VALUE)
+        put(GrpcHeader.GRPC_TIME_OUT_KEY, GrpcHeader.GRPC_TIME_OUT_VALUE)
         put(GrpcHeader.ENVIRONMENT, GrpcBinary.ENVIRONMENT)
-        put(
-            GrpcHeader.TRANSFER_ENCODING_KEY, GrpcHeader.TRANSFER_ENCODING_VALUE
-        )
-        put(
-            "TE", "trailers"
-        )
+        put(GrpcHeader.TRANSFER_ENCODING_KEY, GrpcHeader.TRANSFER_ENCODING_VALUE)
         put(GrpcHeader.BUVID, getOrCreateBuvidId())
     }.toMap()

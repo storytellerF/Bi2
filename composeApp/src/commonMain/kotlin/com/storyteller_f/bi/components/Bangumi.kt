@@ -15,28 +15,26 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import com.storyteller_f.bi.data.*
-import com.storyteller_f.bi.entity.bangumi.BangumiInfo
+import com.storyteller_f.bi.entity.BangumiInfo
 import com.storyteller_f.bi.network.LoadingHandler
 import com.storyteller_f.bi.network.Service.bangumiInfo
 import com.storyteller_f.bi.network.bangumiPlayerRepository
 import com.storyteller_f.bi.network.request
-import com.storyteller_f.bi.player.rememberPlayerService
-import com.storyteller_f.bi.safeSub
-import com.storyteller_f.bi.ui.StateView
 import com.storyteller_f.bi.player.PlayerSession
+import com.storyteller_f.bi.player.rememberPlayerService
+import com.storyteller_f.bi.safeSubList
+import com.storyteller_f.bi.ui.StateView
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import moe.tlaster.precompose.navigation.NavHost
-import moe.tlaster.precompose.navigation.path
-import moe.tlaster.precompose.navigation.rememberNavigator
-import moe.tlaster.precompose.navigation.transition.NavTransition
-
-
-import moe.tlaster.precompose.viewmodel.viewModelScope
 
 class BangumiViewModel(val id: String, private val seasonId: String) : ViewModel() {
     val bangumiHandler = LoadingHandler<BangumiInfo?>(::refresh)
@@ -51,7 +49,9 @@ class BangumiViewModel(val id: String, private val seasonId: String) : ViewModel
             }
             if (v != null) {
                 bangumiPlayerRepository(v, bangumiInfo)
-            } else null
+            } else {
+                null
+            }
         }
     }
 
@@ -66,7 +66,6 @@ class BangumiViewModel(val id: String, private val seasonId: String) : ViewModel
             }
         }
     }
-
 }
 
 @Composable
@@ -76,7 +75,7 @@ fun BangumiPage(
     val id = sessionPack.id
     val seasonId = sessionPack.seasonId
     val bangumiViewModel =
-        viewModel(BangumiViewModel::class, keys = listOf(id, seasonId)) {
+        customViewModel(BangumiViewModel::class, keys = listOf(id, seasonId)) {
             BangumiViewModel(id, seasonId)
         }
     val info by bangumiViewModel.bangumiHandler.data.collectAsState()
@@ -91,25 +90,27 @@ fun BangumiPage(
             VideoFrame(
                 playerKit,
                 aspectRatio = true,
-                startFullscreenMode = null
+                switchFullscreenMode = null
             )
             BangumiPageNavHost(info, id)
         }
     }
 }
 
-
 @Composable
 fun BangumiDescription(info: BangumiInfo?, toComment: () -> Unit = {}) {
     Surface {
         if (info != null) {
-            Text("comment", modifier = Modifier.clickable {
-                toComment()
-            })
+            Text(
+                "comment",
+                modifier = Modifier.clickable {
+                    toComment()
+                }
+            )
             Column {
                 Text(text = info.title)
                 val main = info.episodes.take(info.totalEp)
-                val other = info.episodes.safeSub(info.totalEp, info.episodes.size)
+                val other = info.episodes.safeSubList(info.totalEp, info.episodes.size)
                 val episodeModifier =
                     Modifier.background(MaterialTheme.colorScheme.primaryContainer)
                         .padding(16.dp).sizeIn(maxWidth = 80.dp)
@@ -131,29 +132,27 @@ fun BangumiDescription(info: BangumiInfo?, toComment: () -> Unit = {}) {
 
 @Composable
 fun BangumiPageNavHost(videoInfo: BangumiInfo?, videoId: String) {
-    val navigator = rememberNavigator()
+    val navigator = rememberNavController()
     NavHost(
-        navigator = navigator,
-        navTransition = NavTransition(),
-        initialRoute = "/home",
+        navController = navigator,
+        startDestination = "/home",
     ) {
-        scene(
+        composable(
             route = "/description",
         ) {
             BangumiDescription(videoInfo)
         }
 
-        scene(
+        composable(
             route = "/comment",
         ) {
             CommentsPage(videoId)
         }
 
-        scene(
+        composable(
             route = "/comment/{id}",
         ) {
-            val id = it.path<Long>("id")!!
-            CommentReplyPage(id, videoId.toLong())
+            it.arguments?.getLong("id")?.let { it1 -> CommentReplyPage(it1, videoId.toLong()) }
         }
     }
 }

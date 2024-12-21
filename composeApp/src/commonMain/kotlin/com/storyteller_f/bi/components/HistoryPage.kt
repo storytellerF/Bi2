@@ -10,25 +10,28 @@ import androidx.compose.ui.unit.dp
 import app.cash.paging.compose.collectAsLazyPagingItems
 import app.cash.paging.compose.itemContentType
 import app.cash.paging.compose.itemKey
+import bilibili.app.interfaces.v1.CursorItem
+import com.storyteller_f.bi.LOCALAppNav
+import com.storyteller_f.bi.data.PagingViewModel
+import com.storyteller_f.bi.data.SimplePagingSource
+import com.storyteller_f.bi.data.customViewModel
+import com.storyteller_f.bi.network.Service.historyResult
+import com.storyteller_f.bi.network.cover
+import com.storyteller_f.bi.network.progress
+import com.storyteller_f.bi.network.type
+import com.storyteller_f.bi.player.PlayerSession
 import com.storyteller_f.bi.ui.RemoteImage
 import com.storyteller_f.bi.ui.StandBy
 import com.storyteller_f.bi.ui.StateView
 import com.storyteller_f.bi.ui.bottomAppending
-import com.storyteller_f.bi.data.PagingViewModel
-import com.storyteller_f.bi.data.SimplePagingSource
-import com.storyteller_f.bi.data.viewModel
-import com.storyteller_f.bi.network.HistoryVideoItem
-import com.storyteller_f.bi.network.Service.historyResult
-import com.storyteller_f.bi.player.PlayerSession
 
-
-//todo 增加搜索功能
+// todo 增加搜索功能
 class HistoryViewModel :
-    PagingViewModel<Pair<Long, Int>, HistoryVideoItem>({ SimplePagingSource(::historyResult) })
+    PagingViewModel<Pair<Long, Int>, CursorItem>({ SimplePagingSource(::historyResult) })
 
 @Composable
-fun HistoryPage(openVideo: (PlayerSession) -> Unit = { }) {
-    val viewModel = viewModel(HistoryViewModel::class)
+fun HistoryPage() {
+    val viewModel = customViewModel(HistoryViewModel::class)
 
     val lazyItems = viewModel.flow.collectAsLazyPagingItems()
 
@@ -42,8 +45,9 @@ fun HistoryPage(openVideo: (PlayerSession) -> Unit = { }) {
                 contentType = lazyItems.itemContentType()
             ) { index ->
                 val item = lazyItems[index]
-                if (item != null)
-                    HistoryItem(item, openVideo)
+                if (item != null) {
+                    HistoryItem(item)
+                }
             }
             bottomAppending(lazyItems)
         }
@@ -52,21 +56,20 @@ fun HistoryPage(openVideo: (PlayerSession) -> Unit = { }) {
 
 @Composable
 fun HistoryItem(
-    item: HistoryVideoItem,
-    openVideo: (PlayerSession) -> Unit = {}
+    item: CursorItem
 ) {
     val text = item.title
-    val progress = item.progress
+    val progress = item.progress()
     val kid = item.kid
     val oid = item.oid
     val business = item.business
-    val pic = item.cover
-    val label = "$oid $kid ${item.type} $business $progress"
+    val pic = item.cover()
+    val label = "$oid $kid ${item.type()} $business $progress"
+    val appNav = LOCALAppNav.current
     VideoItem(pic, text, label) {
-        openVideo(PlayerSession.VideoSession(kid.toString(), business, progress))
+        appNav.gotoVideo(PlayerSession.VideoSession(kid.toString(), business, progress))
     }
 }
-
 
 @Composable
 fun VideoItem(
@@ -75,11 +78,13 @@ fun VideoItem(
     label: String = "label",
     watchVideo: () -> Unit = {}
 ) {
-    Row(modifier = Modifier
-        .padding(8.dp)
-        .clickable {
-            watchVideo()
-        }) {
+    Row(
+        modifier = Modifier
+            .padding(8.dp)
+            .clickable {
+                watchVideo()
+            }
+    ) {
         val coverModifier = Modifier
             .width((16 * 8).dp)
             .height((9 * 8).dp)

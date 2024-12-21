@@ -4,6 +4,7 @@ import com.storyteller_f.bi.network.DashSource
 import com.storyteller_f.bi.network.Service.bangumiPlayUrlData
 import com.storyteller_f.bi.network.Service.bangumiReport
 import com.storyteller_f.bi.network.Service.bangumiResultInfo
+import io.github.aakira.napier.Napier
 
 class BangumiPlayerRepository(
     private val sid: String,
@@ -20,12 +21,11 @@ class BangumiPlayerRepository(
         return bangumiPlayUrlData(quality, fnval, epid, id).map { res ->
             val dash = res.dash
             PlayerSourceInfo(
-                res.lastPlayCid.orEmpty(),
-                res.lastPlayTime ?: 0,
                 res.quality,
                 res.acceptQuality.mapIndexed { index, i ->
                     PlayerSourceInfo.AcceptInfo(i, res.acceptDescription[index])
-                }, when {
+                },
+                when {
                     dash != null -> {
                         val duration = dash.duration * 1000L
                         val dashSource = DashSource(res.quality, dash)
@@ -44,7 +44,8 @@ class BangumiPlayerRepository(
                         }
                         VideoInfo2(duration, 1, 1, url)
                     }
-                })
+                }
+            )
         }
     }
 
@@ -54,12 +55,11 @@ class BangumiPlayerRepository(
                 SubtitleSourceInfo(
                     id = subtitleX.id,
                     lan = subtitleX.lan,
-                    lan_doc = subtitleX.lanDoc,
-                    subtitle_url = subtitleX.subtitleUrl,
-                    ai_status = subtitleX.aiStatus,
+                    lanDoc = subtitleX.lanDoc,
+                    subtitleUrl = subtitleX.subtitleUrl,
+                    aiStatus = subtitleX.aiStatus,
                 )
             }
-
         }, onFailure = {
             it.printStackTrace()
             emptyList()
@@ -68,10 +68,12 @@ class BangumiPlayerRepository(
 
     override suspend fun historyReport(progress: Long) {
         try {
-            val realtimeProgress = progress.toString()  // 秒数
+            val realtimeProgress = progress.toString() // 秒数
             bangumiReport(realtimeProgress, aid, id, epid, sid)
         } catch (e: Exception) {
-            e.printStackTrace()
+            Napier.e(e) {
+                "report progress failed"
+            }
         }
     }
 }

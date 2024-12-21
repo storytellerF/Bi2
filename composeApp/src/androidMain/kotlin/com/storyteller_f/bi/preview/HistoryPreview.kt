@@ -4,19 +4,18 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
+import bilibili.app.interfaces.v1.CursorItem
 import com.storyteller_f.bi.components.HistoryItem
-import com.storyteller_f.bi.network.HistoryVideoItem
 
-class VideoItemProvider : PreviewParameterProvider<HistoryVideoItem> {
-    override val values: Sequence<HistoryVideoItem>
+class VideoItemProvider : PreviewParameterProvider<CursorItem> {
+    override val values: Sequence<CursorItem>
         get() = sequence {
-            yield(HistoryVideoItem("", "", 0L, 0L, 0, "test", "type"))
+            yield(CursorItem())
         }
-
 }
 
 @Preview
 @Composable
-fun HistoryVideoItemPreview(@PreviewParameter(VideoItemProvider::class) item: HistoryVideoItem) {
+fun HistoryVideoItemPreview(@PreviewParameter(VideoItemProvider::class) item: CursorItem) {
     HistoryItem(item)
 }

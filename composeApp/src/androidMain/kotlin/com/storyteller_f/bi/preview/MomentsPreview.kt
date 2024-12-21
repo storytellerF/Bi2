@@ -17,7 +17,9 @@ class MomentsPreviewProvider : PreviewParameterProvider<MomentsDataInfo> {
                 MomentsDataInfo(
                     MomentsDesc("desc"),
                     DynamicContentInfo(
-                        "i", pic = "https://i0.hdslb.com/bfs/face/member/noface.jpg", title = "视频标题",
+                        "i",
+                        pic = "https://i0.hdslb.com/bfs/face/member/noface.jpg",
+                        title = "视频标题",
                     ),
                     0,
                     "up name",
@@ -28,7 +30,6 @@ class MomentsPreviewProvider : PreviewParameterProvider<MomentsDataInfo> {
                 )
             )
         }
-
 }
 
 @Preview

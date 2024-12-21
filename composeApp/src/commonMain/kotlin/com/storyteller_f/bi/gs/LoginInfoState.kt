@@ -1,9 +1,11 @@
 package com.storyteller_f.bi.gs
 
-import com.storyteller_f.bi.entity.auth.LoginInfo
+import com.storyteller_f.bi.entity.CookieInfo
+import com.storyteller_f.bi.entity.LoginInfo
 import com.storyteller_f.bi.fileSystem
 import com.storyteller_f.bi.network.PlatformCookieManager
-import com.storyteller_f.bi.realPath
+import com.storyteller_f.bi.userPath
+import io.github.aakira.napier.Napier
 import io.ktor.client.plugins.cookies.*
 import io.ktor.http.*
 import io.ktor.util.date.*
@@ -13,7 +15,6 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import okio.Path.Companion.toPath
 import kotlin.time.Duration.Companion.seconds
-
 
 object LoginInfoState {
     private var _loginInfo: LoginInfo? = null
@@ -31,7 +32,9 @@ object LoginInfoState {
                 _loginInfo = loginInfo
             }
         } catch (e: Exception) {
-            e.printStackTrace()
+            Napier.e(e) {
+                "restore failed"
+            }
         }
     }
 
@@ -50,9 +53,9 @@ object LoginInfoState {
         _loginInfo = null
     }
 
-    private val path get() = realPath("auth").toPath()
+    private val path get() = userPath("auth").toPath()
 
-    private fun saveCookie(cookieInfo: com.storyteller_f.bi.entity.auth.CookieInfo) {
+    private fun saveCookie(cookieInfo: CookieInfo) {
         runBlocking {
             cookieInfo.domains.forEach { domain ->
                 cookieInfo.cookies.forEach { cookie ->

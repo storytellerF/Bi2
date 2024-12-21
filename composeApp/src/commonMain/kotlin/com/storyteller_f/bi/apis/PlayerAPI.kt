@@ -1,21 +1,19 @@
 package com.storyteller_f.bi.apis
 
+import com.storyteller_f.bi.entity.PlayerV2Info
+import com.storyteller_f.bi.entity.PlayurlData
 import com.storyteller_f.bi.entity.ResultInfo
-import com.storyteller_f.bi.entity.player.PlayerV2Info
-import com.storyteller_f.bi.entity.stream.PlayurlData
 import de.jensklingenberg.ktorfit.http.GET
 import de.jensklingenberg.ktorfit.http.Header
 import de.jensklingenberg.ktorfit.http.Query
 
 interface PlayerAPI {
 
-
     @GET("x/player/v2")
     suspend fun getPlayerV2Info(
         @Query("aid") aid: String,
         @Query("cid") cid: String,
     ): ResultInfo<PlayerV2Info>
-
 
     @GET("x/player/v2")
     suspend fun getPlayerV2Info(
@@ -37,7 +35,11 @@ interface PlayerAPI {
         @Query("type") type: String = "",
         @Query("otype") otype: String = "json",
         @Header("Referer") referer: String = "https://www.bilibili.com/av$avid",
-        @Header("User-Agent") userAgent: String = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.84 Safari/537.36"
+        @Header(
+            "User-Agent"
+        ) userAgent: String = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) " +
+            "AppleWebKit/537.36 (KHTML, like Gecko) " +
+            "Chrome/63.0.3239.84 Safari/537.36"
     ): ResultInfo<PlayurlData>
 
     @GET("pgc/player/api/playurl")
@@ -56,5 +58,4 @@ interface PlayerAPI {
         @Query("mobi_app") app: String = "android",
         @Query("platform") platform: String = "android",
     ): PlayurlData
-
 }

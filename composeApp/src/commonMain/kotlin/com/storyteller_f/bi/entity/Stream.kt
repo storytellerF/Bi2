@@ -1,6 +1,5 @@
-package com.storyteller_f.bi.entity.stream
+package com.storyteller_f.bi.entity
 
-import com.storyteller_f.bi.entity.Response
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -9,14 +8,14 @@ data class PlayurlData(
     @SerialName("accept_description") val acceptDescription: List<String>,
     @SerialName("accept_format") val acceptFormat: String,
     @SerialName("accept_quality") val acceptQuality: List<Int>,
-    override val code: Int,
+    val code: Int,
     val dash: Dash?,
     val durl: List<Durl>?,
     val format: String,
     val from: String,
     @SerialName("last_play_cid") val lastPlayCid: String?,
     @SerialName("last_play_time") val lastPlayTime: Long?,
-    override val message: String,
+    val message: String,
     val quality: Int,
     val result: String,
     @SerialName("seek_param") val seekParam: String,
@@ -24,8 +23,8 @@ data class PlayurlData(
     @SerialName("support_formats") val supportFormats: List<SupportFormats>,
     val timelength: Int,
     @SerialName("video_codecid") val videoCodecid: Int,
-) : Response<String> {
-    override val res: String
+) {
+    val res: String
         get() = result
 }
 

@@ -4,8 +4,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
-import com.storyteller_f.bi.entity.video.*
 import com.storyteller_f.bi.components.VideoDescription
+import com.storyteller_f.bi.entity.*
 
 class VideoInfoPreviewProvider : PreviewParameterProvider<VideoInfo> {
     override val values: Sequence<VideoInfo>
@@ -25,7 +25,7 @@ class VideoInfoPreviewProvider : PreviewParameterProvider<VideoInfo> {
                     VideoOwnerInfo("", "", ""),
                     listOf(VideoPageInfo("", "", 1, "", 1, "part", "", "")),
                     "",
-                    1681045208L,
+                    0L,
                     null,
                     VideoReqUserInfo(1, 1, 1, 1, 1),
                     null,
@@ -44,7 +44,6 @@ class VideoInfoPreviewProvider : PreviewParameterProvider<VideoInfo> {
                 )
             )
         }
-
 }
 
 @Preview

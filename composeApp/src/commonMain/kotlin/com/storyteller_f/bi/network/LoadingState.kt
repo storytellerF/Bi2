@@ -1,7 +1,6 @@
 package com.storyteller_f.bi.network
 
-import com.storyteller_f.bi.entity.Response
-import com.storyteller_f.bi.entity.ResultInfo2
+import com.storyteller_f.bi.entity.ResultInfo
 import kotlinx.coroutines.flow.MutableStateFlow
 
 sealed class LoadingState {
@@ -14,7 +13,6 @@ class LoadingHandler<T>(val refresh: suspend () -> Unit) {
     val state: MutableStateFlow<LoadingState?> = MutableStateFlow(null)
     val data: MutableStateFlow<T?> = MutableStateFlow(null)
 }
-
 
 fun MutableStateFlow<LoadingState?>.loaded() {
     value = LoadingState.Done()
@@ -34,24 +32,25 @@ fun MutableStateFlow<LoadingState?>.loading(message: String = "") {
 
 inline fun <T> request(
     handler: LoadingHandler<T>,
-    service: () -> Result<ResultInfo2<T?>>,
+    service: () -> Result<ResultInfo<T?>>,
 ) {
     val state = handler.state
     val data = handler.data
     state.loading()
     service().onSuccess { res ->
         val result = res.result
-        if (res.isSuccess() && result != null) {
+        if (res.code == 0 && result != null) {
             data.value = result
             state.loaded()
-        } else state.error(res.error())
+        } else {
+            state.error(res.error())
+        }
     }.onFailure {
         state.error(it)
     }
 }
 
-
-fun<T> Response<T>.error(): Exception {
+fun<T> ResultInfo<T>.error(): Exception {
     return Exception("$code: $message")
 }
 

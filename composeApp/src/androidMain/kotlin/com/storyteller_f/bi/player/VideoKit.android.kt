@@ -14,9 +14,7 @@ import com.storyteller_f.bi.components.PlayerService
 import com.storyteller_f.bi.components.VideoSize
 import com.storyteller_f.bi.repository.BasePlayerRepository
 import io.github.aakira.napier.log
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import kotlin.time.Duration.Companion.seconds
 
 class AndroidPlayerService(
@@ -79,9 +77,11 @@ actual fun rememberPlayerService(
         initialValue = null,
         key1 = videoPlayerRepository
     ) {
-        value = if (videoPlayerRepository != null)
+        value = if (videoPlayerRepository != null) {
             com.storyteller_f.bi.player.Player.mediaSource(videoPlayerRepository).getOrNull()
-        else null
+        } else {
+            null
+        }
     }
     return remember {
         derivedStateOf {
@@ -102,7 +102,7 @@ actual fun rememberPlayerService(
 actual fun VideoView(
     service: PlayerService,
     aspectRatio: Boolean,
-    startFullscreenMode: ((Boolean) -> Unit)?
+    switchFullscreenMode: ((Boolean) -> Unit)?
 ) {
     service as AndroidPlayerService
     val player = service.player
@@ -110,17 +110,20 @@ actual fun VideoView(
     AndroidView(
         factory = {
             PlayerView(it)
-        }, modifier = Modifier
+        },
+        modifier = Modifier
             .fillMaxWidth()
             .let {
                 if (aspectRatio) {
                     it.aspectRatio(16f / 9)
-                } else it
+                } else {
+                    it
+                }
             }
     ) {
-        if (startFullscreenMode != null) {
+        if (switchFullscreenMode != null) {
             it.setFullscreenButtonClickListener { fullscreen ->
-                startFullscreenMode(fullscreen)
+                switchFullscreenMode(fullscreen)
             }
         }
         it.setShowSubtitleButton(true)

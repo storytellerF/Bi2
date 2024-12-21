@@ -1,10 +1,10 @@
 package com.storyteller_f.bi.components
 
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Clear
@@ -14,14 +14,15 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import app.cash.paging.*
 import app.cash.paging.compose.collectAsLazyPagingItems
-import com.storyteller_f.bi.data.ViewModel
-import com.storyteller_f.bi.data.viewModel
-import com.storyteller_f.bi.entity.search.SearchBangumiInfo
-import com.storyteller_f.bi.entity.search.SearchUpperInfo
-import com.storyteller_f.bi.entity.search.SearchVideoInfo
-import com.storyteller_f.bi.entity.user.UserInfo
+import com.storyteller_f.bi.data.customViewModel
+import com.storyteller_f.bi.entity.SearchBangumiInfo
+import com.storyteller_f.bi.entity.SearchUpperInfo
+import com.storyteller_f.bi.entity.SearchVideoInfo
+import com.storyteller_f.bi.entity.UserInfo
 import com.storyteller_f.bi.gs.UserInfoState
 import com.storyteller_f.bi.network.Service
 import com.storyteller_f.bi.network.Service.bangumiSearchResultInfo
@@ -33,19 +34,15 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.launch
-import moe.tlaster.precompose.navigation.BackHandler
-import moe.tlaster.precompose.viewmodel.viewModelScope
 
 @Composable
-fun SearchPage(
+fun CustomSearchBar(
     modifier: Modifier = Modifier,
     userInfo: UserInfo? = null,
     dockMode: Boolean = false,
-    playVideo: (String?, String?, String, Long) -> Unit = { _, _, _, _ -> },
-    login: () -> Unit = {},
-    back: () -> Unit = {}
+    playVideo: (String?, String?, String, Long) -> Unit = { _, _, _, _ -> }
 ) {
-    val viewModel = viewModel(VideoSearchViewModel::class)
+    val viewModel = customViewModel(VideoSearchViewModel::class)
 
     var activated by remember {
         mutableStateOf(false)
@@ -54,49 +51,50 @@ fun SearchPage(
         mutableStateOf(viewModel.keyword.value)
     }
 
-    val trailingIcon = @Composable {
-        Row(modifier = Modifier.padding(end = 8.dp)) {
-            Icon(Icons.Filled.Clear, contentDescription = "clear", modifier = Modifier.clickable {
-                viewModel.keyword.value = ""
-            })
-            if (!activated && userInfo != null) HomeAvatar(userInfo, login)
-        }
-    }
-    val leadingIcon = @Composable {
-        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "back", modifier = Modifier.clickable {
-            activated = false
-        })
-    }
-    val onActiveChange: (Boolean) -> Unit = {
-        activated = it
-    }
-    val onSearch: (String) -> Unit = {
-        viewModel.keyword.value = it
-        input = it
-    }
-    val onQueryChange: (String) -> Unit = {
-        input = it
-    }
-    val placeholder = @Composable {
-        Text(text = "search")
-    }
-    val content: @Composable (ColumnScope.() -> Unit) = {
-        SearchContent(viewModel, playVideo)
-    }
     CombinedSearchBar(
         dockMode,
         input,
-        onQueryChange,
-        onSearch,
+        {
+            input = it
+        },
+        {
+            viewModel.keyword.value = it
+        },
         activated,
-        onActiveChange,
-        placeholder,
-        leadingIcon,
-        trailingIcon,
+        {
+            activated = it
+        },
+        @Composable {
+            Text(text = "search")
+        },
+        @Composable {
+            Icon(
+                Icons.AutoMirrored.Filled.ArrowBack,
+                contentDescription = "back",
+                modifier = Modifier.clickable {
+                    activated = false
+                }
+            )
+        },
+        @Composable {
+            Row(modifier = Modifier.padding(end = 8.dp)) {
+                if (activated && input.isNotEmpty()) {
+                    Icon(
+                        Icons.Filled.Clear,
+                        contentDescription = "clear",
+                        modifier = Modifier.clickable {
+                            input = ""
+                        }
+                    )
+                }
+                if (!activated && userInfo != null) HomeAvatar(userInfo)
+            }
+        },
         modifier,
-        content
+        {
+            SearchContent(viewModel, playVideo)
+        }
     )
-
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -114,7 +112,6 @@ private fun CombinedSearchBar(
     modifier: Modifier,
     content: @Composable (ColumnScope.() -> Unit)
 ) {
-    val colors1 = SearchBarDefaults.colors()
     if (dockMode) {
         DockedSearchBar(
             inputField = {
@@ -127,13 +124,11 @@ private fun CombinedSearchBar(
                     placeholder = placeholder,
                     leadingIcon = leadingIcon,
                     trailingIcon = trailingIcon,
-                    colors = colors1.inputFieldColors,
                 )
             },
             expanded = activated,
             onExpandedChange = onActiveChange,
             modifier = modifier,
-            colors = colors1,
             content = content,
         )
     } else {
@@ -148,13 +143,11 @@ private fun CombinedSearchBar(
                     placeholder = placeholder,
                     leadingIcon = leadingIcon,
                     trailingIcon = trailingIcon,
-                    colors = colors1.inputFieldColors,
                 )
             },
             expanded = activated,
             onExpandedChange = onActiveChange,
             modifier = modifier,
-            colors = colors1,
             content = content,
         )
     }
@@ -166,11 +159,10 @@ private fun CombinedSearchBar(
 )
 private fun HomeAvatar(
     userInfo: UserInfo,
-    login: () -> Unit = {},
 ) {
     val coverSize = Modifier
         .padding(start = 8.dp)
-        .size(24.dp)
+        .size(30.dp)
     var showPopup by remember {
         mutableStateOf(false)
     }
@@ -183,27 +175,25 @@ private fun HomeAvatar(
             }
         )
     }
-    //todo decorFitsSystemWindows
+    // todo decorFitsSystemWindows
     if (showPopup) {
         BasicAlertDialog(onDismissRequest = { showPopup = false }) {
-            Surface {
-                AvatarContent(userInfo, login)
+            Surface(shape = RoundedCornerShape(20.dp)) {
+                AvatarContent(userInfo)
             }
         }
     }
 }
 
-
 @Composable
-private fun AvatarContent(userInfo: UserInfo? = null, login: () -> Unit = {}) {
+private fun AvatarContent(userInfo: UserInfo? = null) {
     Column {
         Spacer(Modifier.height(12.dp))
-        UserBanner(u = userInfo, login)
+        UserBanner(u = userInfo)
         Spacer(Modifier.height(12.dp))
         NavigationDrawerItem(label = { Text(text = "Setting") }, icon = {
             Icon(Icons.Filled.Settings, contentDescription = "setting")
         }, selected = false, onClick = {
-
         })
         NavigationDrawerItem(label = { Text(text = "Logout") }, icon = {
             Icon(Icons.Filled.Close, contentDescription = "logout")
@@ -214,7 +204,6 @@ private fun AvatarContent(userInfo: UserInfo? = null, login: () -> Unit = {}) {
 }
 
 @Composable
-@OptIn(ExperimentalFoundationApi::class)
 private fun SearchContent(
     viewModel: VideoSearchViewModel,
     playVideo: (String?, String?, String, Long) -> Unit,
@@ -246,7 +235,6 @@ private fun SearchContent(
     HorizontalPager(state = pagerState) {
         SearchPageBuilder(it, viewModel, playVideo)
     }
-
 }
 
 @Composable
@@ -299,7 +287,8 @@ fun UpItem(item: SearchUpperInfo?) {
             val cover = item?.cover
             RemoteImage(
                 model = if (cover != null) "$cover@200w_200h" else null,
-                contentDescription = "cover", modifier = modifier
+                contentDescription = "cover",
+                modifier = modifier
             )
         }
         Column(modifier = Modifier.padding(start = 8.dp)) {
@@ -332,7 +321,6 @@ class VideoSearchViewModel : ViewModel() {
             .cachedIn(viewModelScope)
     }
 
-
     @OptIn(ExperimentalCoroutinesApi::class)
     val upResult = keyword.flatMapLatest {
         Pager(
@@ -363,10 +351,7 @@ class SearchSource(private val keyword: String) : PagingSource<Int, SearchVideoI
                 LoadResult.Error(it)
             })
         }
-
-
     }
-
 }
 
 class SearchUpSource(private val keyword: String) : PagingSource<Int, SearchUpperInfo>() {
@@ -387,13 +372,9 @@ class SearchUpSource(private val keyword: String) : PagingSource<Int, SearchUppe
                 LoadResult.Page(archive, null, nextKey)
             }, onFailure = {
                 LoadResult.Error(it)
-
             })
         }
-
-
     }
-
 }
 
 class SearchBangumiSource(private val keyword: String) : PagingSource<Int, SearchBangumiInfo>() {
@@ -412,12 +393,9 @@ class SearchBangumiSource(private val keyword: String) : PagingSource<Int, Searc
                 val archive = it.data!!.items.orEmpty()
                 val nextKey = if (archive.isEmpty()) null else pageNum + 1
                 LoadResult.Page(archive, null, nextKey)
-
             }, onFailure = {
                 LoadResult.Error(it)
             })
         }
-
     }
-
 }

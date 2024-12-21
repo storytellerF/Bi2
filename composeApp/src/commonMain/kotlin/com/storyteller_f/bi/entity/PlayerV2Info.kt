@@ -1,4 +1,4 @@
-package com.storyteller_f.bi.entity.player
+package com.storyteller_f.bi.entity
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -160,5 +160,22 @@ data class PlayerV2Info(
         val type: Int,
         @SerialName("vip_pay_type") val vipPayType: Int
     )
+}
 
+@Serializable
+data class SubtitleJsonInfo(
+    val stroke: String,
+    @SerialName("background_alpha") val backgroundAlpha: Float,
+    @SerialName("background_color") val backgroundColor: String,
+    val body: List<ItemInfo>,
+    @SerialName("font_color") val fontColor: String,
+    @SerialName("font_size") val fontSize: Float,
+) {
+    @Serializable
+    data class ItemInfo(
+        val from: Double,
+        val to: Double,
+        val location: Int,
+        val content: String,
+    )
 }

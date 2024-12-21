@@ -7,24 +7,85 @@ import bilibili.app.interfaces.v1.CursorItem
 import bilibili.app.interfaces.v1.CursorV2Req
 import bilibili.app.interfaces.v1.GrpcHistoryClient
 import bilibili.main.community.reply.v1.*
+import com.squareup.wire.GrpcCall
 import com.storyteller_f.bi.entity.*
-import com.storyteller_f.bi.entity.bangumi.BangumiInfo
-import com.storyteller_f.bi.entity.search.SearchBangumiInfo
-import com.storyteller_f.bi.entity.search.SearchListInfo
-import com.storyteller_f.bi.entity.stream.PlayurlData
+import com.storyteller_f.bi.entity.BangumiInfo
+import com.storyteller_f.bi.entity.PlayurlData
+import com.storyteller_f.bi.entity.SearchBangumiInfo
+import com.storyteller_f.bi.entity.SearchListInfo
+import com.storyteller_f.bi.fileSystem
+import com.storyteller_f.bi.userPath
 import io.github.aakira.napier.log
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import okio.Path.Companion.toPath
+import kotlin.reflect.KClass
+import kotlin.reflect.full.declaredMemberProperties
+
+suspend inline fun <S : Any, reified R : Any> GrpcCall<S, R>.executeAndSave(s: S): R {
+    val result = execute(s)
+    val path = userPath("${method.path}/${s.hashCode()}.json").toPath()
+    if (!fileSystem.exists(path)) {
+        val parent = path.parent
+        if (parent != null && (
+                fileSystem.exists(parent) || kotlin.runCatching { fileSystem.createDirectories(parent) }
+                    .getOrNull() != null
+                )
+        ) {
+            fileSystem.write(path, mustCreate = true) {
+                writeUtf8(objectToJsonObject(result, R::class).toString())
+            }
+        }
+    }
+    return result
+}
+
+// 通过反射将对象转换为 JsonObject
+inline fun <reified T : Any> objectToJsonObject(obj: T, kclazz: KClass<T>): JsonObject {
+    val jsonBuilder = JsonObjectBuilder()
+
+    // 获取类的所有属性
+    val properties = kclazz.declaredMemberProperties
+
+    // 通过反射获取每个属性的名称和值
+    properties.forEach { property ->
+        val name = property.name
+        // 将值转换为 JsonElement
+        val jsonValue = when (val value = property.get(obj)) {
+            is String -> JsonPrimitive(value)
+            is Int -> JsonPrimitive(value)
+            is Boolean -> JsonPrimitive(value)
+            is Double -> JsonPrimitive(value)
+            else -> JsonNull // 如果是其他类型，使用 JsonNull
+        }
+
+        jsonBuilder.put(name, jsonValue)
+    }
+
+    // 返回构建的 JsonObject
+    return jsonBuilder.build()
+}
+
+// 自定义 JsonObjectBuilder 来构建 JsonObject
+class JsonObjectBuilder {
+    private val map = mutableMapOf<String, JsonElement>()
+
+    fun put(name: String, value: JsonElement) {
+        map[name] = value
+    }
+
+    fun build(): JsonObject {
+        return JsonObject(map)
+    }
+}
 
 class CommentReplyCursor(val mode: Int, val next: Long, val prev: Long)
-
-fun ReplyInfo.buildCommentInfo() = CommentInfo(
-    count, dialog, member!!.face, id, like, content!!.message, member.name, parent, type
-)
-
 
 fun CursorItem.cover(): String {
     return card_ogv?.cover ?: card_ugc?.cover!!
 }
-
 
 fun CursorItem.type(): String {
     return when {
@@ -45,17 +106,6 @@ fun CursorItem.progress(): Long {
         else -> card_cheese?.progress!!
     }
 }
-
-
-class HistoryVideoItem(
-    val business: String,
-    val cover: String,
-    val kid: Long,
-    val oid: Long,
-    val progress: Long,
-    val title: String,
-    val type: String,
-)
 
 data class MomentsDataInfo(
     val descMode: MomentsDesc?,
@@ -79,51 +129,10 @@ data class DynamicContentInfo(
     val title: String = "",
 )
 
-data class VideoDatum(
-    val addAt: Int,
-    val aid: Long,
-    val bvid: String,
-    val cid: Int,
-    val copyright: Int,
-    val count: Int,
-    val createdTime: Int,
-    val desc: String,
-    val duration: Int,
-    val dynamic: String,
-    val name: String,
-    val pic: String,
-    val progress: Int,
-    val pubDate: Int,
-    val state: Int,
-    /**
-     * 分区id
-     */
-    val tid: Long,
-    val title: String,
-    val videos: Int,
-)
-
-class VideoDatumList(
-    val count: Int,
-    val list: List<VideoDatum>,
-)
-
-data class CommentInfo(
-    val count: Long,
-    val dialog: Long,
-    val face: String,
-    val id: Long,
-    val like: Long,
-    val message: String,
-    val name: String,
-    val parent: Long,
-    val type: Long,
-)
-
-inline fun <T, D, R : Response<D>> T.serviceCatching(block: T.() -> R): Result<R> {
+inline fun <T, D> T.serviceCatching(block: T.() -> ResultInfo<D>): Result<ResultInfo<D>> {
     return try {
         val value = block()
-        if (value.isSuccess() && value.res != null) {
+        if (value.code == 0 && value.res != null) {
             Result.success(value)
         } else {
             Result.failure(value.error())
@@ -147,17 +156,29 @@ fun <KEY : Any, DATUM : Any> Result<PagingData<KEY, DATUM>>.loadResult(): Paging
 
 object Service {
 
-    suspend fun bangumiInfo(seasonId: String): Result<ResultInfo2<BangumiInfo?>> = bangumiApi.serviceCatching {
+    suspend fun bangumiInfo(seasonId: String): Result<ResultInfo<BangumiInfo?>> = bangumiApi.serviceCatching {
         seasonInfo(seasonId)
     }
 
     suspend fun bangumiPlayUrlData(
-        quality: Int, fnval: Int, epid: String, id: String
+        quality: Int,
+        fnval: Int,
+        epid: String,
+        id: String
     ): Result<PlayurlData> {
-        return playerApi.serviceCatching {
-            getBangumiUrl(
-                epid, id, quality.toString(), if (fnval > 2) "1" else null, fnval.toString()
+        return kotlin.runCatching {
+            val bangumiUrl = playerApi.getBangumiUrl(
+                epid,
+                id,
+                quality.toString(),
+                if (fnval > 2) "1" else null,
+                fnval.toString()
             )
+            if (bangumiUrl.code == 0) {
+                bangumiUrl
+            } else {
+                throw Exception("${bangumiUrl.code} ${bangumiUrl.message}")
+            }
         }
     }
 
@@ -171,23 +192,33 @@ object Service {
     }
 
     suspend fun bangumiSearchResultInfo(
-        keyword: String, loadSize: Int, pageNum: Int
+        keyword: String,
+        loadSize: Int,
+        pageNum: Int
     ): Result<ResultInfo<SearchListInfo<SearchBangumiInfo>>> = searchApi.serviceCatching {
         searchBangumi(
-            keyword = keyword, pageNum = pageNum, pageSize = loadSize
+            keyword = keyword,
+            pageNum = pageNum,
+            pageSize = loadSize
         )
     }
 
     suspend fun commentReplyResult(
-        oid: Long, pid: Long, key: CommentReplyCursor?
+        oid: Long,
+        pid: Long,
+        key: CommentReplyCursor?
     ) = GrpcReplyClient(grpcClient).DetailList().runCatching {
-        val req = DetailListReq(oid = oid, root = pid, type = 1, scene = DetailListScene.REPLY, cursor = key?.let {
-            CursorReq(prev = it.prev, next = it.next, mode = Mode.fromValue(it.mode)!!)
-        })
-        val res = execute(req)
-        val data = res.root?.replies.orEmpty().map {
-            it.buildCommentInfo()
-        }
+        val req = DetailListReq(
+            oid = oid,
+            root = pid,
+            type = 1,
+            scene = DetailListScene.REPLY,
+            cursor = key?.let {
+                CursorReq(prev = it.prev, next = it.next, mode = Mode.fromValue(it.mode)!!)
+            }
+        )
+        val res = executeAndSave(req)
+        val data = res.root?.replies.orEmpty()
         val nextKey = res.cursor?.takeIf { !it.isEnd }?.let {
             CommentReplyCursor(it.mode.value, it.next, it.prev)
         }
@@ -195,14 +226,13 @@ object Service {
     }
 
     suspend fun commentResult(
-        id: String, nextParam: Long?
+        id: String,
+        nextParam: Long?
     ) = GrpcReplyClient(grpcClient).MainList().runCatching {
         val req = MainListReq(id.toLong(), 1, CursorReq(next = nextParam ?: 0, mode = Mode.MAIN_LIST_HOT))
 
-        val res = execute(req)
-        val data = res.replies.map {
-            it.buildCommentInfo()
-        }
+        val res = executeAndSave(req)
+        val data = res.replies
         val nextKey = res.cursor?.takeIf { !it.isEnd }?.next
         PagingData(data, nextKey)
     }
@@ -225,22 +255,16 @@ object Service {
         pageSize: Int,
     ) = userspaceApi.serviceCatching {
         favFolderList(
-            mid, pageNum = key, pageSize = pageSize
+            mid,
+            pageNum = key,
+            pageSize = pageSize
         )
     }
 
     suspend fun historyResult(key: Pair<Long, Int>?) =
         GrpcHistoryClient(grpcClient).CursorV2().runCatching {
-
             val (lastMax, lastTp) = key ?: (0L to 0)
             log {
-                /**
-                 * 历史结果
-                 * load: 0 0
-                 * load: 1680969219 3
-                 * load: 1680968482 3
-                 * load: 1680963212 3
-                 */
                 /**
                  * 历史结果
                  * load: 0 0
@@ -251,21 +275,11 @@ object Service {
                 "load: $lastMax $lastTp"
             }
             val req = CursorV2Req(cursor = Cursor(max = lastMax, maxTp = lastTp), business = "archive")
-            val res = execute(req)
+            val res = executeAndSave(req)
             log {
                 "load: ${res.cursor}"
             }
-            val data = res.items.map {
-                HistoryVideoItem(
-                    oid = it.oid,
-                    kid = it.kid,
-                    business = it.business,
-                    progress = it.progress(),
-                    cover = it.cover(),
-                    title = it.title,
-                    type = it.type()
-                )
-            }
+            val data = res.items
             val nextKey = res.cursor?.takeIf { it.max != 0L }
             PagingData(data, if (nextKey == null) null else (nextKey.max) to nextKey.maxTp)
         }
@@ -279,7 +293,7 @@ object Service {
                 Refresh.refresh_history
             }
             val req = DynVideoReq(baseline, offset, refresh_type = type, local_time = 8)
-            val result = execute(req)
+            val result = executeAndSave(req)
             if (result.dynamic_list != null) {
                 val dynamicListData = result.dynamic_list
                 val itemsList = dynamicListData.list.filter { item ->
@@ -287,17 +301,18 @@ object Service {
                 }.map { item ->
                     val modules = item.modules
                     val userModule = modules.first { it.module_author != null }.module_author!!
-                    val descModule = modules.find { it.module_desc != null }?.module_desc!!
+                    val descModule = modules.find { it.module_desc != null }?.module_desc
                     val dynamicModule = modules.first { it.module_dynamic != null }.module_dynamic!!
                     val statModule = modules.first { it.module_stat != null }.module_stat!!
+                    val author = userModule.author!!
                     MomentsDataInfo(
-                        mid = userModule.author!!.mid.toString(),
-                        name = userModule.author.name,
-                        face = userModule.author.face,
+                        mid = author.mid.toString(),
+                        name = author.name,
+                        face = author.face,
                         labelText = userModule.ptime_label_text,
                         dynamicType = dynamicModule.type.value,
                         dynamicContent = dynamicModule.getDynamicContent(),
-                        descMode = MomentsDesc(descModule.text),
+                        descMode = MomentsDesc(descModule?.text),
                         stat = MomentsStat(statModule.reply, statModule.like, statModule.repost),
                     )
                 }
@@ -308,31 +323,41 @@ object Service {
         }
 
     suspend fun playList() = userspaceApi.serviceCatching {
-        toBePlay()
+        playList()
     }
 
     suspend fun requestQrcode() = authApi.qrCode()
 
     suspend fun requestQrcodeResult(authCode: String) = authApi.checkQrCode(authCode)
 
-
     suspend fun requestUserInfo(mid: Long) = userspaceApi.serviceCatching {
         space(mid.toString())
     }
 
     suspend fun searchUpper(
-        keyword: String, loadSize: Int, pageNum: Int
+        keyword: String,
+        loadSize: Int,
+        pageNum: Int
     ) = searchApi.serviceCatching {
         searchUpper(
-            keyword = keyword, pageNum = pageNum, pageSize = loadSize
+            keyword = keyword,
+            pageNum = pageNum,
+            pageSize = loadSize
         )
     }
 
     suspend fun searchVideo(
-        keyword: String, pageNum: Int, pageSize: Int
+        keyword: String,
+        pageNum: Int,
+        pageSize: Int
     ) = searchApi.serviceCatching {
         searchArchive(
-            keyword = keyword, order = "default", duration = 0, rid = 0, pageNum = pageNum, pageSize = pageSize
+            keyword = keyword,
+            order = "default",
+            duration = 0,
+            rid = 0,
+            pageNum = pageNum,
+            pageSize = pageSize
         )
     }
 
@@ -347,10 +372,17 @@ object Service {
     }
 
     suspend fun videoPlayurlData(
-        quality: Int, fnval: Int, aid: String, id: String
+        quality: Int,
+        fnval: Int,
+        aid: String,
+        id: String
     ) = playerApi.serviceCatching {
         getVideoPalyUrl(
-            aid, id, quality.toString(), if (fnval > 2) "1" else null, fnval.toString()
+            aid,
+            id,
+            quality.toString(),
+            if (fnval > 2) "1" else null,
+            fnval.toString()
         )
     }
 

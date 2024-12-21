@@ -1,9 +1,9 @@
 package com.storyteller_f.bi.apis
 
+import com.storyteller_f.bi.entity.QRLoginScheme
+import com.storyteller_f.bi.entity.QrLoginInfo
 import com.storyteller_f.bi.entity.ResultInfo
-import com.storyteller_f.bi.entity.auth.QRLoginScheme
-import com.storyteller_f.bi.entity.auth.QrLoginInfo
-import com.storyteller_f.bi.entity.user.UserInfo
+import com.storyteller_f.bi.entity.UserInfo
 import com.storyteller_f.bi.gs.getOrCreateBuvidId
 import de.jensklingenberg.ktorfit.http.Field
 import de.jensklingenberg.ktorfit.http.FormUrlEncoded
@@ -34,6 +34,4 @@ interface AuthApi {
         @Field("auth_code") authCode: String,
         @Field("local_id") localId: String = getOrCreateBuvidId(),
     ): ResultInfo<QrLoginInfo>
-
 }
-

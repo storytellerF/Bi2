@@ -1,8 +1,8 @@
 package com.storyteller_f.bi.gs
 
-import com.storyteller_f.bi.entity.user.UserInfo
+import com.storyteller_f.bi.entity.UserInfo
 import com.storyteller_f.bi.fileSystem
-import com.storyteller_f.bi.realPath
+import com.storyteller_f.bi.userPath
 import io.github.aakira.napier.log
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.serialization.encodeToString
@@ -15,7 +15,7 @@ object UserInfoState {
 
     fun saveUserInfo(userInfo: UserInfo?) {
         state.value = userInfo
-        val file = realPath("user.data").toPath()
+        val file = userPath("user.data").toPath()
         if (userInfo != null) {
             val jsonStr = Json.encodeToString<UserInfo>(userInfo)
             fileSystem.write(file) {
@@ -34,7 +34,7 @@ object UserInfoState {
 
     fun restoreUserInfo() {
         try {
-            val file = realPath("user.data").toPath()
+            val file = userPath("user.data").toPath()
             if (fileSystem.exists(file)) {
                 val jsonStr = fileSystem.read(file) {
                     readUtf8()
@@ -48,5 +48,4 @@ object UserInfoState {
             }
         }
     }
-
 }

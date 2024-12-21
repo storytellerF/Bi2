@@ -5,7 +5,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import com.storyteller_f.bi.components.SearchPage
+import com.storyteller_f.bi.components.CustomSearchBar
 import com.storyteller_f.bi.ui.theme.BiTheme
 
 @Composable
@@ -13,9 +13,7 @@ import com.storyteller_f.bi.ui.theme.BiTheme
 private fun PreviewSearchPage() {
     BiTheme {
         Surface(modifier = Modifier.fillMaxWidth()) {
-            SearchPage(modifier = Modifier) {
-
-            }
+            CustomSearchBar(modifier = Modifier)
         }
     }
 }

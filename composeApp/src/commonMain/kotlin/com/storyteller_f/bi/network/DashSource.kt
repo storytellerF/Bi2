@@ -1,7 +1,7 @@
 package com.storyteller_f.bi.network
 
-import com.storyteller_f.bi.entity.stream.Dash
-import com.storyteller_f.bi.entity.stream.DashItem
+import com.storyteller_f.bi.entity.Dash
+import com.storyteller_f.bi.entity.DashItem
 
 class DashSource(
     private val quality: Int,
@@ -25,7 +25,6 @@ class DashSource(
         }
         return null
     }
-
 
     fun getMDPUrl(
         video: DashItem = getDashVideo()!!
@@ -67,5 +66,4 @@ class DashSource(
         val url = video.baseUrl
         return "[dash-mpd]\n" + url + "\n" + mpdStr.replace("\n", "")
     }
-
 }

@@ -1,7 +1,7 @@
 package com.storyteller_f.bi.apis
 
 import com.storyteller_f.bi.entity.ResultInfo
-import com.storyteller_f.bi.entity.video.VideoInfo
+import com.storyteller_f.bi.entity.VideoInfo
 import de.jensklingenberg.ktorfit.http.GET
 import de.jensklingenberg.ktorfit.http.POST
 import de.jensklingenberg.ktorfit.http.Query
@@ -37,4 +37,3 @@ interface VideoAPI {
         @Query("sub_type") subType: String = "1"
     )
 }
-

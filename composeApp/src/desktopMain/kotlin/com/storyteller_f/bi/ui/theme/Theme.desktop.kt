@@ -8,4 +8,6 @@ actual fun colorScheme(
     darkTheme: Boolean
 ) = if (darkTheme) {
     DarkColors
-} else LightColors
+} else {
+    LightColors
+}
