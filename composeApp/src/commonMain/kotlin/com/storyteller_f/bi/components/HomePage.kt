@@ -1,6 +1,8 @@
 package com.storyteller_f.bi.components
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.*
 import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
@@ -44,7 +46,7 @@ fun HomePage() {
         navigator.navigate(config.route)
     }
     Scaffold {
-        Surface {
+        Surface(Modifier.padding(top = it.calculateTopPadding())) {
             CompositionLocalProvider(
                 LocalAppNav provides object : AppNav {
                     override fun gotoLogin() = appNav.gotoLogin()
@@ -70,7 +72,9 @@ fun HomePage() {
                     Row(modifier = Modifier.displayCutoutPadding()) {
                         RailBar(currentRoute, selectRoute)
                         ContentInternal(user, true, Modifier.weight(1f), navigator)
-                        AdaptiveVideo(adaptiveVideo)
+                        AdaptiveVideo(adaptiveVideo) {
+                            adaptiveVideo = null
+                        }
                     }
                 } else {
                     Column(modifier = Modifier) {
@@ -84,15 +88,22 @@ fun HomePage() {
 }
 
 @Composable
-private fun RowScope.AdaptiveVideo(adaptiveVideo: PlayerSession?) {
+private fun RowScope.AdaptiveVideo(adaptiveVideo: PlayerSession?, closeAdaptive: () -> Unit) {
     adaptiveVideo?.let {
-        Box(modifier = Modifier.Companion.weight(1f)) {
-            if (it is PlayerSession.VideoSession) {
-                VideoPage(
-                    playerSession = it
-                )
-            } else if (it is PlayerSession.BangumiSession) {
-                BangumiPage(it)
+        Column(modifier = Modifier.Companion.weight(1f)) {
+            IconButton({
+                closeAdaptive()
+            }) {
+                Icon(Icons.Default.Close, "hide adaptive video")
+            }
+            Box(modifier = Modifier.Companion.weight(1f)) {
+                if (it is PlayerSession.VideoSession) {
+                    VideoPage(
+                        playerSession = it
+                    )
+                } else if (it is PlayerSession.BangumiSession) {
+                    BangumiPage(it)
+                }
             }
         }
     }

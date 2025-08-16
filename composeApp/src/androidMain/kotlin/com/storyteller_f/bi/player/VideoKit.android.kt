@@ -61,22 +61,22 @@ actual fun rememberPlayerService(
             videoPlayerRepository?.historyReport(player.currentPosition)
         }
     }
-    DisposableEffect(key1 = player, effect = {
-        releaseResource(reportProgress, player)
-    })
+
     val mediaSourceGroup by produceState<MediaSourceGroup?>(
         initialValue = null,
         key1 = videoPlayerRepository
     ) {
         value = if (videoPlayerRepository != null) {
-            com.storyteller_f.bi.player.Player.mediaSource(videoPlayerRepository).getOrNull()
+            val sourceGroup = com.storyteller_f.bi.player.Player.mediaSource(videoPlayerRepository).getOrNull()
+            prepareResource(sourceGroup, videoPlayerRepository, player, context)
+            sourceGroup
         } else {
             null
         }
     }
-    LaunchedEffect(mediaSourceGroup, videoPlayerRepository) {
-        prepareResource(mediaSourceGroup, videoPlayerRepository, player, context)
-    }
+    DisposableEffect(key1 = player, effect = {
+        releaseResource(reportProgress, player)
+    })
     return AndroidPlayerService(size, progress, reportProgress, videoPlayerRepository, mediaSourceGroup, player)
 }
 

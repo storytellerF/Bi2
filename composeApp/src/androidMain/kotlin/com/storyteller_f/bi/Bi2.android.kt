@@ -19,5 +19,4 @@ actual val userAgent: String
             |build/${BUILD_VERSION} channel/bili innerVer/${BUILD_VERSION} 
             |osVer/${Build.VERSION.RELEASE} network/2
     """.trimMargin().replace("\n", "")
-actual val fileSystem: FileSystem
-    get() = FileSystem.SYSTEM
+actual val fileSystem: FileSystem = FileSystem.SYSTEM
