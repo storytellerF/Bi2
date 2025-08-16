@@ -1,6 +1,7 @@
 @file:Suppress("UnstableApiUsage")
 
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 
 plugins {
@@ -20,7 +21,7 @@ kotlin {
     if (buildWasmTarget) {
         @OptIn(ExperimentalWasmDsl::class)
         wasmJs {
-            moduleName = "composeApp"
+            outputModuleName = "composeApp"
             browser {
                 commonWebpackConfig {
                     outputFileName = "composeApp.js"
@@ -32,12 +33,10 @@ kotlin {
 
 
     androidTarget {
-        compilations.all {
-            @Suppress("DEPRECATION")
-            kotlinOptions {
-                jvmTarget = "11"
-            }
+        compilerOptions {
+            jvmTarget.set(JvmTarget.JVM_21)
         }
+
     }
 
     jvm()
@@ -57,7 +56,6 @@ kotlin {
             implementation(libs.kotlinx.coroutines.core)
         }
     }
-    jvmToolchain(11)
 }
 
 android {
@@ -76,8 +74,8 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
     }
 }
 

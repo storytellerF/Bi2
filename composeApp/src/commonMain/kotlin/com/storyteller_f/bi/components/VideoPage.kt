@@ -37,9 +37,10 @@ import com.storyteller_f.bi.ui.StateView
 import io.github.aakira.napier.log
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import kotlinx.datetime.Instant
 import net.sergeych.sprintf.sprintf
+import kotlin.time.ExperimentalTime
 
+@OptIn(ExperimentalTime::class)
 @Composable
 fun VideoDescription(
     info: VideoInfo?,
@@ -54,8 +55,7 @@ fun VideoDescription(
         Text(text = info?.title.orEmpty())
         val pubDate = info?.pubdate
         if (pubDate != null) {
-            Instant.fromEpochSeconds(pubDate)
-            Text(text = "%tO".sprintf(Instant.fromEpochSeconds(pubDate)))
+            Text(text = "%tO".sprintf(kotlin.time.Instant.fromEpochSeconds(pubDate)))
         }
         if (!pages.isNullOrEmpty()) {
             PageRow(pages)
@@ -171,9 +171,10 @@ fun VideoPage(
 ) {
     val videoId = playerSession.id
     val initProgress = playerSession.progress
-    val videoViewModel = customViewModel(VideoViewModel::class, keys = listOf("video${playerSession.id}")) {
-        set(VideoId, videoId)
-    }
+    val videoViewModel =
+        customViewModel(VideoViewModel::class, keys = listOf("video${playerSession.id}")) {
+            set(VideoId, videoId)
+        }
 
     /**
      * 一般来说就是全屏的意思

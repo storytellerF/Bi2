@@ -26,6 +26,7 @@ import kotlinx.serialization.json.Json
 import okio.Path.Companion.toPath
 import org.kotlincrypto.hash.md.MD5
 import java.nio.charset.Charset
+import kotlin.time.ExperimentalTime
 
 const val BUILD_VERSION = 1450000
 const val BILI_APP_VERSION = "1.45.0"
@@ -109,7 +110,10 @@ private fun Parameters.toList(): List<Pair<String, String>> {
     return old
 }
 
-fun getTimeInterval(): Long = Clock.System.now().toEpochMilliseconds() / 1000
+@OptIn(ExperimentalTime::class)
+fun getTimeInterval(): Long {
+    return kotlin.time.Clock.System.now().toEpochMilliseconds() / 1000
+}
 
 @OptIn(ExperimentalStdlibApi::class)
 fun getMD5(info: String): String {
