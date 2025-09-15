@@ -38,7 +38,6 @@ import javax.swing.JButton
 import javax.swing.JPanel
 import kotlin.time.Duration.Companion.seconds
 
-
 class DesktopPlayerService(
     size: VideoSize?,
     initProgress: Long,
@@ -74,64 +73,13 @@ actual fun rememberPlayerService(
     val mediaPlayerComponent = remember {
         initializeMediaPlayerComponent()
     }
-    val mediaPlayer = mediaPlayerComponent.mediaPlayer()
-    val events = mediaPlayer.events()
-    events.addMediaEventListener(object : MediaEventAdapter() {
-        override fun mediaParsedChanged(media: Media?, newStatus: MediaParsedStatus?) {
-            super.mediaParsedChanged(media, newStatus)
-            if (newStatus == MediaParsedStatus.DONE) {
-                media?.info()?.videoTracks()?.firstOrNull()?.let {
-                    size = VideoSize(it.width(), it.height())
-                }
-            }
-        }
-    })
-    events.addMediaPlayerEventListener(object : MediaPlayerEventAdapter() {
-        override fun error(mediaPlayer: MediaPlayer?) {
-            super.error(mediaPlayer)
-            Napier.i {
-                "vlc error"
-            }
-        }
 
-        override fun buffering(mediaPlayer: MediaPlayer?, newCache: Float) {
-            super.buffering(mediaPlayer, newCache)
-            Napier.i {
-                "vlc buffering $newCache"
-            }
-        }
-
-        override fun playing(mediaPlayer: MediaPlayer?) {
-            super.playing(mediaPlayer)
-            Napier.i {
-                "vlc playing"
-            }
-        }
-
-        override fun mediaPlayerReady(mediaPlayer: MediaPlayer?) {
-            super.mediaPlayerReady(mediaPlayer)
-            Napier.i {
-                "vlc player ready"
-            }
-        }
-
-        override fun positionChanged(mediaPlayer: MediaPlayer?, newPosition: Float) {
-            super.positionChanged(mediaPlayer, newPosition)
-            Napier.i {
-                "vlc player position change $newPosition"
-            }
-        }
-
-        override fun volumeChanged(mediaPlayer: MediaPlayer?, volume: Float) {
-            super.volumeChanged(mediaPlayer, volume)
-            Napier.i {
-                "vlc player volume changed $volume"
-            }
-        }
-    })
     val reportProgress: () -> Unit = {
         scope.launch {
         }
+    }
+    val mediaPlayer = mediaPlayer(mediaPlayerComponent) {
+        size = it
     }
 
     val mediaSourceGroup by produceState<MediaSourceGroup?>(
@@ -139,24 +87,7 @@ actual fun rememberPlayerService(
         key1 = videoPlayerRepository
     ) {
         value = if (videoPlayerRepository != null) {
-            val sourceGroup = Player.mediaSource(videoPlayerRepository).getOrNull()
-            val mediaOptions = arrayOf(
-                ":http-referrer=$DEFAULT_REFERER",
-                ":http-user-agent=$DEFAULT_USER_AGENT",
-            )
-            val media = mediaPlayer.media()
-            if (sourceGroup is MediaSourceGroup.VideoAndAudio) {
-                val result = media.prepare(sourceGroup.video, *mediaOptions)
-                Napier.i {
-                    "prepare result $result"
-                }
-            } else if (sourceGroup is MediaSourceGroup.Parts) {
-                val result = media.prepare(sourceGroup.url.first(), *mediaOptions)
-                Napier.i {
-                    "prepare result $result"
-                }
-            }
-            sourceGroup
+            sourceGroup(videoPlayerRepository, mediaPlayer)
         } else {
             null
         }
@@ -183,6 +114,30 @@ actual fun rememberPlayerService(
         mediaSourceGroup,
         mediaPlayerComponent
     )
+}
+
+private suspend fun sourceGroup(
+    videoPlayerRepository: BasePlayerRepository,
+    mediaPlayer: EmbeddedMediaPlayer
+): MediaSourceGroup? {
+    val sourceGroup = Player.mediaSource(videoPlayerRepository).getOrNull()
+    val mediaOptions = arrayOf(
+        ":http-referrer=$DEFAULT_REFERER",
+        ":http-user-agent=$DEFAULT_USER_AGENT",
+    )
+    val media = mediaPlayer.media()
+    if (sourceGroup is MediaSourceGroup.VideoAndAudio) {
+        val result = media.prepare(sourceGroup.video, *mediaOptions)
+        Napier.i {
+            "prepare result $result"
+        }
+    } else if (sourceGroup is MediaSourceGroup.Parts) {
+        val result = media.prepare(sourceGroup.url.first(), *mediaOptions)
+        Napier.i {
+            "prepare result $result"
+        }
+    }
+    return sourceGroup
 }
 
 class PlayerPanel(surfacePanel: Component) : JPanel() {
@@ -289,4 +244,63 @@ private fun isMacOS(): Boolean {
         .getProperty("os.name", "generic")
         .lowercase(Locale.ENGLISH)
     return "mac" in os || "darwin" in os
+}
+
+fun mediaPlayer(mediaPlayerComponent: Component, updateSize: (VideoSize) -> Unit): EmbeddedMediaPlayer {
+    val mediaPlayer = mediaPlayerComponent.mediaPlayer()
+    val events = mediaPlayer.events()
+    events.addMediaEventListener(object : MediaEventAdapter() {
+        override fun mediaParsedChanged(media: Media?, newStatus: MediaParsedStatus?) {
+            super.mediaParsedChanged(media, newStatus)
+            if (newStatus == MediaParsedStatus.DONE) {
+                media?.info()?.videoTracks()?.firstOrNull()?.let {
+                    updateSize(VideoSize(it.width(), it.height()))
+                }
+            }
+        }
+    })
+    events.addMediaPlayerEventListener(object : MediaPlayerEventAdapter() {
+        override fun error(mediaPlayer: MediaPlayer?) {
+            super.error(mediaPlayer)
+            Napier.i {
+                "vlc error"
+            }
+        }
+
+        override fun buffering(mediaPlayer: MediaPlayer?, newCache: Float) {
+            super.buffering(mediaPlayer, newCache)
+            Napier.i {
+                "vlc buffering $newCache"
+            }
+        }
+
+        override fun playing(mediaPlayer: MediaPlayer?) {
+            super.playing(mediaPlayer)
+            Napier.i {
+                "vlc playing"
+            }
+        }
+
+        override fun mediaPlayerReady(mediaPlayer: MediaPlayer?) {
+            super.mediaPlayerReady(mediaPlayer)
+            Napier.i {
+                "vlc player ready"
+            }
+        }
+
+        override fun positionChanged(mediaPlayer: MediaPlayer?, newPosition: Float) {
+            super.positionChanged(mediaPlayer, newPosition)
+            Napier.i {
+                "vlc player position change $newPosition"
+            }
+        }
+
+        override fun volumeChanged(mediaPlayer: MediaPlayer?, volume: Float) {
+            super.volumeChanged(mediaPlayer, volume)
+            Napier.i {
+                "vlc player volume changed $volume"
+            }
+        }
+    })
+    return mediaPlayer
 }
